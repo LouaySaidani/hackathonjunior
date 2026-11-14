@@ -150,7 +150,7 @@ export default function NewProject() {
                 {t("adLanguage")}
               </label>
               <select id={ids.lang} className="input" value={language} onChange={(e) => setLanguage(e.target.value as Lang)}>
-                {(["fr", "ar", "aeb", "en"] as const).map((l) => (
+                {(["fr", "ar", "aeb"] as const).map((l) => (
                   <option key={l} value={l}>
                     {t(`lang_${l}` as Key)}
                   </option>

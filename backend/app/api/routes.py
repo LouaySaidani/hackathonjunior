@@ -33,7 +33,7 @@ from ..pipeline.vad import overlaps
 from ..providers.vision import QuotaExceeded, get_vision
 
 router = APIRouter(prefix="/api")
-LANGS = {"fr", "ar", "aeb", "en"}
+LANGS = {"fr", "ar", "aeb"}  # audio description languages (films may speak others)
 
 
 # ------------------------------------------------------------------ helpers ---------------------------

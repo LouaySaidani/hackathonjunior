@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 # Conservative AD speaking rates (words per second). Arabic words are longer on average.
-WORDS_PER_SECOND = {"fr": 2.6, "en": 2.7, "ar": 2.0, "aeb": 2.1}
+WORDS_PER_SECOND = {"fr": 2.6, "ar": 2.0, "aeb": 2.1}
 
 
 def word_count(text: str) -> int:

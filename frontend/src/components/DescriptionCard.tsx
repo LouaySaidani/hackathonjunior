@@ -58,7 +58,7 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
   const dirty = text.trim() !== d.text || Number(start) !== Number(d.start.toFixed(2)) || Number(end) !== Number(d.end.toFixed(2));
   const rtl = isRtl(d.language);
   const words = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
-  const wps = { fr: 2.6, en: 2.7, ar: 2.0, aeb: 2.1 }[d.language] ?? 2.5;
+  const wps = { fr: 2.6, ar: 2.0, aeb: 2.1 }[d.language] ?? 2.5;
   const est = words / wps + 0.3;
   const dur = Number(end) - Number(start);
   const tooLong = est > dur + 0.05;
@@ -219,7 +219,7 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
             value={d.language}
             onChange={(e) => run("lang", () => api.patchDescription(d.id, { language: e.target.value as Lang, editor: validator }))}
           >
-            {(["fr", "ar", "aeb", "en"] as const).map((l) => (
+            {(["fr", "ar", "aeb"] as const).map((l) => (
               <option key={l} value={l}>
                 {t(`lang_${l}` as Key)}
               </option>

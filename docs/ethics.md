@@ -40,7 +40,7 @@ code** ; le fichier et le comportement correspondants sont indiqués.
 
 ## 4. Cultures et langues
 
-- Audiodescription en **français, arabe standard (فصحى) et darija tunisienne (تونسي)**, plus l'anglais.
+- Audiodescription en **français, arabe standard (فصحى) et darija tunisienne (تونسي)**.
 - Rendu **RTL** de l'arabe dans l'interface (`dir="rtl"`, `lang`), dans le WebVTT (balise `<lang>` et RLM) et dans le TTML (`tts:direction="rtl"`).
 - Le prompt demande des termes culturels exacts (*sefsari*, *chéchia*, *médina*) **seulement s'ils sont visibles**.
 - **Le choix entre arabe standard et darija revient aux usagers aveugles** : on le mesure dans les retours et on en rend compte, on ne l'impose pas.

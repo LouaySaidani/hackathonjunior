@@ -51,7 +51,6 @@ class Settings(BaseSettings):
     tts_provider: str = "auto"
     tts_voice_fr: str = "fr-FR-DeniseNeural"
     tts_voice_ar: str = "ar-TN-ReemNeural"
-    tts_voice_en: str = "en-GB-SoniaNeural"
 
     # --- pipeline tuning ---
     vad_engine: str = "silero"  # silero | webrtc

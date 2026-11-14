@@ -1,5 +1,5 @@
 export type Status = "ai_draft" | "edited" | "validated" | "rejected";
-export type Lang = "fr" | "ar" | "aeb" | "en";
+export type Lang = "fr" | "ar" | "aeb"; // audio description languages
 
 export interface Job {
   id: string;

@@ -18,7 +18,7 @@ from ..pipeline.media import run
 
 log = logging.getLogger("tts")
 
-ESPEAK_VOICES = {"fr": "fr", "ar": "ar", "aeb": "ar", "en": "en"}
+ESPEAK_VOICES = {"fr": "fr", "ar": "ar", "aeb": "ar"}
 
 
 @dataclass
@@ -40,8 +40,7 @@ class EdgeTTS(TTSProvider):
     name = "edge"
 
     def __init__(self, settings: Settings):
-        self.voices = {"fr": settings.tts_voice_fr, "ar": settings.tts_voice_ar,
-                       "aeb": settings.tts_voice_ar, "en": settings.tts_voice_en}
+        self.voices = {"fr": settings.tts_voice_fr, "ar": settings.tts_voice_ar, "aeb": settings.tts_voice_ar}
 
     def synthesize(self, text: str, language: str, out: Path) -> TTSResult:
         import edge_tts

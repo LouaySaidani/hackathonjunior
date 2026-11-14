@@ -21,7 +21,6 @@ LANG_NAMES = {
     "fr": "French",
     "ar": "Modern Standard Arabic (فصحى)",
     "aeb": "Tunisian Arabic (Darija / تونسي), written in Arabic script",
-    "en": "English",
 }
 
 
@@ -347,7 +346,6 @@ class OpenAICompatibleVision(VisionProvider):
 
 COLOR_NAMES = {
     "fr": ["rouge", "orangée", "jaune", "verte", "cyan", "bleue", "violette", "rose"],
-    "en": ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink"],
     "ar": ["حمراء", "برتقالية", "صفراء", "خضراء", "سماوية", "زرقاء", "بنفسجية", "وردية"],
     "aeb": ["حمراء", "برتقالية", "صفراء", "خضراء", "سماوية", "زرقاء", "بنفسجية", "وردية"],
 }
@@ -401,11 +399,10 @@ class DemoVision(VisionProvider):
         else:
             hue, bright, _ = _frame_stats(req.frames[len(req.frames) // 2])
         color = COLOR_NAMES[lang][hue]
-        light = {"fr": ("sombre", "lumineux"), "en": ("dark", "bright"),
+        light = {"fr": ("sombre", "lumineux"),
                  "ar": ("مظلمة", "مضيئة"), "aeb": ("مظلمة", "مضوية")}[lang][1 if bright > 0.45 else 0]
         templates = {
             "fr": ("Changement de plan. " if req.scene_change else "") + f"Plan {light}, à dominante {color}.",
-            "en": ("Cut. " if req.scene_change else "") + f"A {light} shot, mostly {color}.",
             "ar": ("تغيّر اللقطة. " if req.scene_change else "") + f"لقطة {light} بألوان {color}.",
             "aeb": ("تتبدّل اللقطة. " if req.scene_change else "") + f"لقطة {light} لونها {color}.",
         }
