@@ -434,9 +434,6 @@ def synthesize_validated(project_id: str, ctx: JobContext | None = None, only_id
         if not descs:
             raise ValueError("Aucune ligne validée : la voix n'est générée que pour les lignes validées par un humain.")
         for i, d in enumerate(descs):
-            if d.audio_source == "human" and not force:
-                results.append({"id": d.id, "skipped": "voix humaine conservée"})
-                continue
             if d.audio_path and d.audio_source in ("tts", "demo_tone") and not force:
                 results.append({"id": d.id, "skipped": "déjà synthétisé"})
                 continue
@@ -500,15 +497,11 @@ def export_project(project_id: str, ctx: JobContext | None = None) -> dict:
         if ctx:
             ctx.update(0.35, "ad_track", "Assemblage de la piste d'audiodescription…")
         ad_wav = out / "ad_track.wav"
-        if p.voice_track_path:
-            media.normalize_clip(absolute(p.voice_track_path), ad_wav, max_duration=p.duration)
-            warnings.append("Piste voix humaine complète utilisée.")
-        else:
-            clips = [(d.start, absolute(d.audio_path)) for d in descs if d.audio_path and absolute(d.audio_path).exists()]
-            missing = [d for d in descs if not d.audio_path]
-            if missing:
-                warnings.append(f"{len(missing)} ligne(s) validée(s) sans voix : générez la voix ou enregistrez-la.")
-            mix.build_ad_track(clips, p.duration, ad_wav)
+        clips = [(d.start, absolute(d.audio_path)) for d in descs if d.audio_path and absolute(d.audio_path).exists()]
+        missing = [d for d in descs if not d.audio_path]
+        if missing:
+            warnings.append(f"{len(missing)} ligne(s) validée(s) sans voix : générez les voix avant l'export.")
+        mix.build_ad_track(clips, p.duration, ad_wav)
         mix.encode_mp3(ad_wav, out / "ad_track.mp3")
         files += ["ad_track.wav", "ad_track.mp3"]
 

@@ -8,7 +8,7 @@
 | Ajustement à la durée | `tests/test_fit_export.py` | Texte raccourci ou signalé `too_long` |
 | WebVTT / TTML | `tests/test_fit_export.py` | VTT valide, `-->` échappé, RTL ; TTML est du XML valide avec `tts:direction="rtl"` |
 | Fournisseurs | `tests/test_providers.py` | Demo honnête (faible confiance hors clip d'exemple) ; forme des requêtes Gemini et OpenAI-compatibles (mock HTTP) ; règle « pas de reconnaissance faciale » présente dans le prompt |
-| Parcours complet | `tests/test_api.py` | Import avec consentement → analyse → modification, régénération, validation, rejet → voix TTS et humaine → export des 8 fichiers ; seules les lignes validées sont exportées |
+| Parcours complet | `tests/test_api.py` | Import avec consentement → analyse → modification, régénération, validation, rejet → validation groupée (`test_validate_all`) → voix TTS → export des 8 fichiers ; seules les lignes validées sont exportées |
 | CI | `.github/workflows/ci.yml` | ruff, pytest, build frontend, notebook |
 
 ## 2. Validation de l'accessibilité

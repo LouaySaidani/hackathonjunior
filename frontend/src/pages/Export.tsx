@@ -1,5 +1,5 @@
-import { AudioLines, Download, FileAudio, FileText, FileVideo, MessageSquareHeart, Package, PencilRuler, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioLines, Download, FileAudio, FileText, FileVideo, MessageSquareHeart, Package, PencilRuler } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ErrorBox, Notice, PageHeader, ProgressBar, Spinner, useJob } from "../components/ui";
 import { api, fmtBytes, isRtl } from "../lib/api";
@@ -14,14 +14,13 @@ const ICONS: Record<string, typeof FileText> = { mp4: FileVideo, mp3: FileAudio,
 export default function ExportPage() {
   const { id } = useParams();
   const { t } = useT();
-  const { project, setProject, error, reload } = useProject(id);
+  const { project, error, reload } = useProject(id);
   useTitle(`${t("exportTitle")} — ${project?.title ?? ""}`);
   const [files, setFiles] = useState<Files>([]);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [lastResult, setLastResult] = useState<{ warnings?: string[] } | null>(null);
-  const trackRef = useRef<HTMLInputElement>(null);
 
   const loadFiles = useCallback(() => {
     if (!id) return;
@@ -190,41 +189,6 @@ export default function ExportPage() {
             >
               <AudioLines size={16} aria-hidden="true" /> {t("genAllVoices")}
             </button>
-            <div className="rounded-xl border border-line p-3">
-              <p className="text-sm font-semibold">{t("voiceTrack")}</p>
-              <p className="hint mb-3 mt-1">{t("voiceTrackHint")}</p>
-              {project.voice_track_url ? (
-                <div className="space-y-2">
-                  <audio controls src={project.voice_track_url} className="w-full" />
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    onClick={() => api.deleteVoiceTrack(project.id).then((p) => setProject({ ...project, ...p }), (e) => setActionError(e.message))}
-                  >
-                    <Trash2 size={15} aria-hidden="true" /> {t("removeTrack")}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button type="button" className="btn-secondary" onClick={() => trackRef.current?.click()}>
-                    <Upload size={15} aria-hidden="true" /> {t("uploadTrack")}
-                  </button>
-                  <input
-                    ref={trackRef}
-                    type="file"
-                    accept="audio/*"
-                    className="sr-only"
-                    tabIndex={-1}
-                    aria-label={t("uploadTrack")}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) api.uploadVoiceTrack(project.id, f).then((p) => setProject({ ...project, ...p }), (er) => setActionError(er.message));
-                      e.target.value = "";
-                    }}
-                  />
-                </>
-              )}
-            </div>
           </section>
 
           <div aria-live="polite" aria-atomic="true" className="space-y-3">

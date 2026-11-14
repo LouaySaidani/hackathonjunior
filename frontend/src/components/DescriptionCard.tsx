@@ -1,18 +1,15 @@
 import {
   Check,
-  CircleStop,
-  Mic,
   Play,
   RotateCcw,
   Save,
   Sparkles,
   Trash2,
-  Upload,
   Volume2,
   Wand2,
   X,
 } from "lucide-react";
-import { forwardRef, useEffect, useId, useRef, useState } from "react";
+import { forwardRef, useEffect, useId, useState } from "react";
 import { api, fmtTime, isRtl, type Description, type Lang } from "../lib/api";
 import { useT, type Key } from "../lib/i18n";
 import { ErrorBox, FlagChip, Notice, StatusBadge } from "./ui";
@@ -51,9 +48,6 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
-  const [recording, setRecording] = useState(false);
-  const recRef = useRef<MediaRecorder | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setText(d.text);
@@ -126,30 +120,6 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
     registerActions({ validate, reject, save, play });
     return () => registerActions(null);
   });
-
-  const startRecording = async () => {
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
-      rec.ondataavailable = (e) => chunks.push(e.data);
-      rec.onstop = () => {
-        stream.getTracks().forEach((tr) => tr.stop());
-        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
-        run("voice", () => api.uploadVoice(d.id, blob, "recording.webm"));
-      };
-      rec.start();
-      recRef.current = rec;
-      setRecording(true);
-    } catch (e) {
-      setError(`Micro indisponible : ${(e as Error).message}`);
-    }
-  };
-  const stopRecording = () => {
-    recRef.current?.stop();
-    setRecording(false);
-  };
 
   const date = d.validated_at ? new Date(d.validated_at).toLocaleString(uiLang === "fr" ? "fr-FR" : "en-GB") : "";
   const headingId = `${uid}-h`;
@@ -313,31 +283,6 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
           >
             {busy === "tts" ? t("loading") : t("genVoice")}
           </button>
-          {!recording ? (
-            <button type="button" className="btn-secondary !py-1.5" onClick={startRecording} disabled={!!busy}>
-              <Mic size={15} aria-hidden="true" /> {t("record")}
-            </button>
-          ) : (
-            <button type="button" className="btn-danger !py-1.5" onClick={stopRecording}>
-              <CircleStop size={15} aria-hidden="true" /> {t("stopRecord")}
-            </button>
-          )}
-          <button type="button" className="btn-secondary !py-1.5" onClick={() => fileRef.current?.click()} disabled={!!busy}>
-            <Upload size={15} aria-hidden="true" /> {t("uploadAudio")}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="audio/*"
-            className="sr-only"
-            tabIndex={-1}
-            aria-label={t("uploadAudio")}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) run("voice", () => api.uploadVoice(d.id, f, f.name));
-              e.target.value = "";
-            }}
-          />
           {d.audio_url && (
             <button type="button" className="btn-ghost !py-1.5" onClick={() => run("rmvoice", () => api.deleteVoice(d.id))}>
               {t("removeAudio")}

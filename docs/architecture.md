@@ -25,7 +25,7 @@ flowchart LR
     GAP[compute_gaps<br/>≥ 1,5 s, marge 0,25 s]
     VLM[VLM provider<br/>gemini · openai-compatible · demo]
     FIT[fit_to_gap<br/>mots/s → coupe ou signale]
-    TTS[TTS provider<br/>edge-tts · espeak-ng · demo<br/>+ voix humaine]
+    TTS[TTS provider<br/>edge-tts · espeak-ng · demo]
     MIX[FFmpeg mix<br/>ducking · MP4 2 pistes]
     EXP[WebVTT · TTML · credits · script ayant droit]
   end

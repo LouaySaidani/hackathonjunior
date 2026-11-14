@@ -52,7 +52,6 @@ class Project(SQLModel, table=True):
     vlm_model: str = ""
     vad_engine: str = ""
     demo_mode: bool = False
-    voice_track_path: str = ""  # optional full human-recorded AD track
     error: str = ""
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
@@ -114,7 +113,7 @@ class Description(SQLModel, table=True):
     validated_at: datetime | None = None
     history_json: str = "[]"  # traceability log
     audio_path: str = ""
-    audio_source: str = ""  # tts | human | demo_tone
+    audio_source: str = ""  # tts | demo_tone
     audio_duration: float = 0.0
     audio_voice: str = ""
     created_at: datetime = Field(default_factory=utcnow)

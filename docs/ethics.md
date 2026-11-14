@@ -43,7 +43,7 @@ code** ; le fichier et le comportement correspondants sont indiqués.
 - Rendu **RTL** de l'arabe dans l'interface (`dir="rtl"`, `lang`), dans le WebVTT (balise `<lang>` et RLM) et dans le TTML (`tts:direction="rtl"`).
 - Le prompt demande des termes culturels exacts (*sefsari*, *chéchia*, *médina*) **seulement s'ils sont visibles**.
 - **Le choix entre arabe standard et darija revient aux usagers aveugles** : on le mesure dans les retours et on en rend compte, on ne l'impose pas.
-- Voix darija : la synthèse est signalée comme approximative. L'outil propose l'**enregistrement d'une voix humaine** (par ligne ou en piste complète).
+- Voix darija : la synthèse est signalée comme approximative. La voix est toujours générée par la synthèse vocale : l'humain intervient sur le **texte** (écriture, correction, validation), pas sur l'enregistrement.
 
 ## 5. Transparence
 

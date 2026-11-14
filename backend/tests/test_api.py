@@ -34,7 +34,7 @@ def test_upload_requires_consent_and_valid_type(client, sample_video):
     assert r.status_code == 415
 
 
-def test_full_flow(client, tone_wav):
+def test_full_flow(client):
     # 1. sample project (rights-clear clip)
     p = client.post("/api/projects/sample").json()
     pid = p["id"]
@@ -91,13 +91,13 @@ def test_full_flow(client, tone_wav):
     after = {d["id"]: d for d in client.get(f"/api/projects/{pid}").json()["descriptions"]}
     assert after[first["id"]]["status"] == "validated" and after[third["id"]]["status"] == "rejected"
 
-    # 6. voice: TTS refused for unvalidated, demo TTS for validated, human upload
+    # 6. voice: TTS refused for unvalidated, demo TTS for validated; recording a human voice is not offered
     assert client.post(f"/api/descriptions/{descs[3]['id']}/tts").status_code == 409
     t = client.post(f"/api/descriptions/{first['id']}/tts").json()
     assert t["audio_url"] and t["audio_source"] == "demo_tone"
-    with tone_wav.open("rb") as f:
-        h = client.post(f"/api/descriptions/{m['id']}/voice", files={"file": ("v.wav", f, "audio/wav")}).json()
-    assert h["audio_source"] == "human" and h["audio_duration"] > 1
+    assert client.post(f"/api/descriptions/{m['id']}/voice", files={"file": ("v.wav", b"x")}).status_code == 405
+    # 405, not 404: the SPA catch-all answers GET on every path, so other methods are "not allowed"
+    assert client.post(f"/api/projects/{pid}/voice-track", files={"file": ("v.wav", b"x")}).status_code == 405
     job = _wait(client, client.post(f"/api/projects/{pid}/tts").json()["id"])
     assert job["status"] == "done"
 
@@ -114,6 +114,32 @@ def test_full_flow(client, tone_wav):
     credits = client.get(f"/api/projects/{pid}/export/credits.txt").text
     assert "audiodescription assistée par IA, validée par Amira, Sami" in credits
     assert client.get(f"/api/projects/{pid}/export/../app.db").status_code == 404
+
+
+def test_validate_all(client):
+    """Bulk validation: a named human action that skips rejected lines and keeps too-long ones blocked."""
+    pid = client.post("/api/projects/sample").json()["id"]
+    assert _wait(client, client.post(f"/api/projects/{pid}/analyze").json()["id"])["status"] == "done"
+    descs = client.get(f"/api/projects/{pid}").json()["descriptions"]
+    assert len(descs) >= 3
+    rejected, too_long = descs[0], descs[1]
+    client.post(f"/api/descriptions/{rejected['id']}/reject", json={"by": "Amira"})
+    long_text = " ".join(["mot"] * 80)
+    r = client.patch(f"/api/descriptions/{too_long['id']}", json={"text": long_text, "editor": "Amira"}).json()
+    assert "too_long" in r["flags"]
+
+    assert client.post(f"/api/projects/{pid}/validate-all", json={"validator": " "}).status_code == 422
+    res = client.post(f"/api/projects/{pid}/validate-all", json={"validator": "Amira"}).json()
+
+    assert res == {"validated": len(descs) - 2, "blocked": [too_long["id"]]}
+    after = {d["id"]: d for d in client.get(f"/api/projects/{pid}").json()["descriptions"]}
+    assert after[rejected["id"]]["status"] == "rejected"
+    assert after[too_long["id"]]["status"] == "edited"
+    others = [d for i, d in after.items() if i not in (rejected["id"], too_long["id"])]
+    assert all(d["status"] == "validated" and d["validated_by"] == "Amira" for d in others)
+    assert all(d["history"][-1]["detail"] == "validation groupée" for d in others)
+    # nothing left to validate
+    assert client.post(f"/api/projects/{pid}/validate-all", json={"validator": "Amira"}).json()["validated"] == 0
 
 
 def test_feedback(client):

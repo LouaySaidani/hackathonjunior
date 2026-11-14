@@ -1,4 +1,4 @@
-import { ArrowRight, Keyboard, Plus, Volume2 } from "lucide-react";
+import { ArrowRight, CheckCheck, Keyboard, Plus, Volume2 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import DescriptionCard, { type CardActions } from "../components/DescriptionCard";
@@ -32,6 +32,9 @@ export default function Editor() {
   const [previewAd, setPreviewAd] = useState(false);
   const [announce, setAnnounce] = useState("");
   const [addError, setAddError] = useState("");
+  const [confirmAll, setConfirmAll] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ tone: "ok" | "warn" | "error"; text: string } | null>(null);
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const actionsRef = useRef<CardActions | null>(null);
   const stopAt = useRef<number | null>(null);
@@ -54,6 +57,26 @@ export default function Editor() {
   );
   const total = descs.filter((d) => d.status !== "rejected").length;
   const validated = descs.filter((d) => d.status === "validated").length;
+  const pending = descs.filter((d) => d.status === "ai_draft" || d.status === "edited");
+  const pendingReview = pending.filter((d) => d.needs_review).length;
+
+  const validateAll = async () => {
+    if (!project) return;
+    setBulkBusy(true);
+    try {
+      const res = await api.validateAll(project.id, validator.trim());
+      await reload();
+      const parts = [t("validateAllDone", { n: res.validated })];
+      if (res.blocked.length) parts.push(t("validateAllBlocked", { n: res.blocked.length }));
+      setBulkResult({ tone: res.blocked.length ? "warn" : "ok", text: parts.join(" ") });
+      setAnnounce(parts.join(" "));
+      setConfirmAll(false);
+    } catch (e) {
+      setBulkResult({ tone: "error", text: (e as Error).message });
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const updateDesc = (d: Description) =>
     setProject((p) => (p ? { ...p, descriptions: p.descriptions.map((x) => (x.id === d.id ? d : x)) } : p));
@@ -324,6 +347,42 @@ export default function Editor() {
               <p className="mb-1 text-sm font-medium">{t("progressValidated", { a: validated, b: total })}</p>
               <ProgressBar value={total ? validated / total : 0} label={t("humanValidation")} />
             </div>
+            {pending.length > 0 && !confirmAll && (
+              <button
+                type="button"
+                className="btn-success w-full"
+                onClick={() => {
+                  setBulkResult(null);
+                  if (!validator.trim()) setBulkResult({ tone: "error", text: t("needValidator") });
+                  else setConfirmAll(true);
+                }}
+              >
+                <CheckCheck size={16} aria-hidden="true" /> {t("validateAll", { n: pending.length })}
+              </button>
+            )}
+            {confirmAll && (
+              <div role="group" aria-labelledby="bulk-confirm" className="space-y-3 rounded-xl border border-line p-3">
+                <p id="bulk-confirm" className="font-semibold">
+                  {t("validateAllConfirm", { n: pending.length, name: validator.trim() })}
+                </p>
+                {pendingReview > 0 && <Notice tone="warn">{t("validateAllReview", { n: pendingReview })}</Notice>}
+                <p className="hint">{t("validateAllHint")}</p>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button type="button" className="btn-ghost" onClick={() => setConfirmAll(false)} disabled={bulkBusy} autoFocus>
+                    {t("validateAllCancel")}
+                  </button>
+                  <button type="button" className="btn-success" onClick={validateAll} disabled={bulkBusy} aria-busy={bulkBusy}>
+                    <CheckCheck size={16} aria-hidden="true" /> {bulkBusy ? t("loading") : t("validateAllGo")}
+                  </button>
+                </div>
+              </div>
+            )}
+            {bulkResult &&
+              (bulkResult.tone === "error" ? (
+                <ErrorBox message={bulkResult.text} />
+              ) : (
+                <Notice tone={bulkResult.tone === "warn" ? "warn" : "success"}>{bulkResult.text}</Notice>
+              ))}
             <div className="flex flex-wrap items-center gap-2">
               <div role="group" aria-label="Filtre" className="inline-flex rounded-xl border border-line p-0.5">
                 {(["all", "review", "pending"] as const).map((f) => (

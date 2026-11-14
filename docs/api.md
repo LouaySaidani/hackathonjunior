@@ -32,16 +32,16 @@ Errors return `{"detail": "<message en français>"}`.
 | PATCH | `/api/descriptions/{id}` | `{text?, start?, end?, language?, editor}`. Any change → `status=edited`, removes validation, recomputes flags. 422 on dialogue overlap |
 | DELETE | `/api/descriptions/{id}` | Delete |
 | POST | `/api/descriptions/{id}/validate` | `{validator}` **required**. Sets `validated`, `validated_by`, `validated_at`. 422 if text is `too_long` |
+| POST | `/api/projects/{id}/validate-all` | `{validator}` **required**. Validates every `ai_draft` / `edited` line at once (history: « validation groupée »). Rejected lines are untouched; `too_long` lines stay blocked and are returned in `blocked`. → `{validated, blocked[]}` |
 | POST | `/api/descriptions/{id}/reject` | `{by, reason}` |
 | POST | `/api/descriptions/{id}/reopen` | Back from `rejected` |
 | POST | `/api/descriptions/{id}/regenerate` | `{hint?, language?}`: new AI draft for the same gap, status back to `ai_draft` |
 | POST | `/api/descriptions/{id}/tts` | Synthesize voice (**validated lines only**, else 409). Returns `warnings` (speed-up, Arabic quality…) |
-| POST | `/api/descriptions/{id}/voice` | **multipart** `file`: human-recorded voice for that line (wav/mp3/m4a/ogg/webm…) |
-| DELETE | `/api/descriptions/{id}/voice` | Remove audio |
+| DELETE | `/api/descriptions/{id}/voice` | Remove the synthesized voice (it can be generated again) |
 
 Description object: `id, start, end, text, language, origin (ai|human), status (ai_draft|edited|validated|rejected),
 confidence, needs_review, flags[] (low_confidence, uncertain, trimmed_to_fit, too_long, demo), provider, model,
-ai_original_text, validated_by, validated_at, history[], audio_url, audio_source (tts|human|demo_tone),
+ai_original_text, validated_by, validated_at, history[], audio_url, audio_source (tts|demo_tone),
 audio_duration, audio_voice, estimated_seconds`.
 
 ## Voice & export
@@ -49,8 +49,6 @@ audio_duration, audio_voice, estimated_seconds`.
 | Method | Path | Description |
 |---|---|---|
 | POST | `/api/projects/{id}/tts` | Job: TTS for all validated lines without audio |
-| POST | `/api/projects/{id}/voice-track` | **multipart** `file`: full human AD track (replaces per-line clips in the mix) |
-| DELETE | `/api/projects/{id}/voice-track` | Remove it |
 | POST | `/api/projects/{id}/export` | Job: builds `film_audiodecrit.mp4` (AD mix + original track), `ad_track.wav/.mp3`, `description.vtt`, `description.ttml`, `credits.txt`, `script_ayant_droit.json`, `export_complet.zip`. **Validated lines only**; 409 if none |
 | GET | `/api/projects/{id}/export` | List generated files |
 | GET | `/api/projects/{id}/export/{name}` | Download one file |

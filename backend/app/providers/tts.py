@@ -1,6 +1,6 @@
 """Text-to-speech providers: edge (neural, needs internet) | espeak (offline) | demo (tone placeholder).
 
-Arabic / darija quality varies: the UI always offers a human-recorded voice upload as fallback.
+Arabic / darija quality varies: the synthesis is flagged as approximate so the describer knows.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ class EdgeTTS(TTSProvider):
         warning = ""
         if language == "aeb":
             warning = ("Voix synthétique arabe tunisienne lisant du darija : la prononciation peut être "
-                       "approximative. Une voix humaine enregistrée est recommandée.")
+                       "approximative.")
         return TTSResult(mp3, self.name, voice, warning)
 
 
@@ -73,7 +73,7 @@ class EspeakTTS(TTSProvider):
         wav = out.with_suffix(".wav")
         subprocess.run([exe, "-v", voice, "-s", "160", "-w", str(wav), text], check=True, capture_output=True, timeout=60)
         warning = "Voix robotique hors-ligne (espeak-ng)." + (
-            " Qualité arabe limitée : une voix humaine est recommandée." if language in ("ar", "aeb") else "")
+            " Qualité arabe limitée." if language in ("ar", "aeb") else "")
         return TTSResult(wav, self.name, f"espeak-ng:{voice}", warning)
 
 
@@ -88,7 +88,7 @@ class DemoTTS(TTSProvider):
         run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"sine=frequency=440:duration={dur:.2f}",
              "-af", "volume=0.15,afade=t=in:d=0.1,afade=t=out:st=" + f"{max(0.0, dur - 0.2):.2f}:d=0.2", str(wav)])
         return TTSResult(wav, self.name, "demo-tone",
-                         "DEMO : bip de substitution (aucune synthèse vocale disponible). Enregistrez une voix humaine.")
+                         "DEMO : bip de substitution (aucune synthèse vocale disponible).")
 
 
 def get_tts_chain(settings: Settings) -> list[TTSProvider]:

@@ -34,7 +34,6 @@ from ..providers.vision import QuotaExceeded, get_vision
 
 router = APIRouter(prefix="/api")
 LANGS = {"fr", "ar", "aeb", "en"}
-AUDIO_EXT = {".wav", ".mp3", ".m4a", ".ogg", ".webm", ".flac", ".aac", ".opus"}
 
 
 # ------------------------------------------------------------------ helpers ---------------------------
@@ -70,7 +69,6 @@ def project_summary(s: Session, p: Project) -> dict:
     data = p.model_dump(exclude={"cast_json"})
     data["cast"] = json.loads(p.cast_json or "[]")
     data["video_url"] = f"/api/files/{p.video_path}" if p.video_path else ""
-    data["voice_track_url"] = f"/api/files/{p.voice_track_path}" if p.voice_track_path else ""
     data["counts"] = counts
     data["needs_review"] = sum(1 for d in descs if d.needs_review and d.status != DescriptionStatus.REJECTED)
     data["active_job"] = jobs.active_job(p.id)
@@ -368,8 +366,7 @@ def patch_description(did: str, body: DescPatch, s: Session = Depends(get_sessio
     if body.text is not None and body.text.strip() != d.text:
         d.text = body.text.strip()
         changed.append("texte")
-        if d.audio_source != "human":
-            service.clear_audio(d)
+        service.clear_audio(d)  # the voice no longer matches the text
     if (start, end) != (d.start, d.end):
         d.start, d.end = round(start, 3), round(end, 3)
         changed.append("minutage")
@@ -404,7 +401,8 @@ def delete_description(did: str, s: Session = Depends(get_session)):
 
 @router.post("/descriptions/{did}/validate")
 def validate_description(did: str, body: ValidateBody, s: Session = Depends(get_session)):
-    """The ONLY way a line becomes HUMAN VALIDATED: an explicit human action with a name."""
+    """A line becomes HUMAN VALIDATED only through an explicit human action with a name: here, or in bulk
+    with POST /projects/{pid}/validate-all."""
     d = _desc(s, did)
     if not body.validator.strip():
         raise HTTPException(422, "Nom du validateur requis")
@@ -423,6 +421,40 @@ def validate_description(did: str, body: ValidateBody, s: Session = Depends(get_
     s.commit()
     s.refresh(d)
     return desc_out(d)
+
+
+@router.post("/projects/{pid}/validate-all")
+def validate_all(pid: str, body: ValidateBody, s: Session = Depends(get_session)):
+    """Validate every pending line at once: still an explicit human action, with a name.
+
+    Rejected lines are left alone, and lines too long for their silence stay blocked, exactly as
+    with single-line validation. Each line records the validation in its own history.
+    """
+    p = _project(s, pid)
+    validator = body.validator.strip()
+    if not validator:
+        raise HTTPException(422, "Nom du validateur requis")
+    pending = s.exec(select(Description).where(
+        Description.project_id == pid,
+        Description.status.in_([DescriptionStatus.AI_DRAFT, DescriptionStatus.EDITED]),  # type: ignore[attr-defined]
+    )).all()
+    validated, blocked = 0, []
+    now = utcnow()
+    for d in pending:
+        if "too_long" in json.loads(d.flags_json):
+            blocked.append(d.id)
+            continue
+        d.status = DescriptionStatus.VALIDATED
+        d.validated_by, d.validated_at = validator, now
+        d.needs_review = False
+        service.add_history(d, "validated", validator, "validation groupée")
+        s.add(d)
+        validated += 1
+    if validated and not p.validator_name:
+        p.validator_name = validator
+        s.add(p)
+    s.commit()
+    return {"validated": validated, "blocked": blocked}
 
 
 @router.post("/descriptions/{did}/reject")
@@ -499,35 +531,9 @@ def tts_description(did: str, s: Session = Depends(get_session)):
     return out
 
 
-@router.post("/descriptions/{did}/voice")
-async def upload_voice(did: str, file: UploadFile = File(...), s: Session = Depends(get_session)):
-    """Human-recorded voice for one line (fallback when TTS is poor, e.g. darija)."""
-    d = _desc(s, did)
-    p = _project(s, d.project_id)
-    ext = Path(file.filename or "").suffix.lower() or ".webm"
-    if ext not in AUDIO_EXT:
-        raise HTTPException(415, "Format audio non pris en charge")
-    vdir = service.project_dir(p.id) / "voice"
-    vdir.mkdir(exist_ok=True)
-    raw = vdir / f"{did}.upload{ext}"
-    await _save_upload(file, raw, 50 * 1024 * 1024)
-    try:
-        warnings = service.place_audio(s, p, d, raw, "human", "voix humaine")
-    except media.MediaError as exc:
-        raise HTTPException(415, f"Audio illisible : {exc}") from exc
-    finally:
-        raw.unlink(missing_ok=True)
-    service.add_history(d, "human_voice", "", " ".join(warnings))
-    s.add(d)
-    s.commit()
-    s.refresh(d)
-    out = desc_out(d)
-    out["warnings"] = warnings
-    return out
-
-
 @router.delete("/descriptions/{did}/voice")
 def delete_voice(did: str, s: Session = Depends(get_session)):
+    """Remove the synthesized voice of a line (it can be generated again)."""
     d = _desc(s, did)
     service.clear_audio(d)
     s.add(d)
@@ -542,39 +548,6 @@ def tts_all(pid: str, s: Session = Depends(get_session)):
     if jobs.active_job(pid):
         raise HTTPException(409, "Une tâche est déjà en cours pour ce projet.")
     return jobs.submit(pid, "tts", lambda ctx: service.synthesize_validated(pid, ctx))
-
-
-@router.post("/projects/{pid}/voice-track")
-async def upload_voice_track(pid: str, file: UploadFile = File(...), s: Session = Depends(get_session)):
-    """A complete human-recorded AD track, aligned on the film timeline."""
-    p = _project(s, pid)
-    ext = Path(file.filename or "").suffix.lower()
-    if ext not in AUDIO_EXT:
-        raise HTTPException(415, "Format audio non pris en charge")
-    dest = service.project_dir(pid) / f"voice_track{ext}"
-    await _save_upload(file, dest, 300 * 1024 * 1024)
-    try:
-        media.audio_duration(dest)
-    except media.MediaError as exc:
-        dest.unlink(missing_ok=True)
-        raise HTTPException(415, f"Audio illisible : {exc}") from exc
-    p.voice_track_path = service.rel(dest)
-    s.add(p)
-    s.commit()
-    s.refresh(p)
-    return project_summary(s, p)
-
-
-@router.delete("/projects/{pid}/voice-track")
-def delete_voice_track(pid: str, s: Session = Depends(get_session)):
-    p = _project(s, pid)
-    if p.voice_track_path:
-        service.absolute(p.voice_track_path).unlink(missing_ok=True)
-    p.voice_track_path = ""
-    s.add(p)
-    s.commit()
-    s.refresh(p)
-    return project_summary(s, p)
 
 
 # ------------------------------------------------------------------ export ----------------------------

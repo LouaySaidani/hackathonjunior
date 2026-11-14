@@ -76,7 +76,7 @@ Pour utiliser un vrai modèle de vision, copiez `.env.example` en `.env` et rens
 
 1. **Nouveau projet** : importez la vidéo, cochez le consentement, choisissez la langue de description.
 2. **Analyse → Lancer l'analyse** : silences, créneaux, scores ML et brouillons Gemini (de 30 s à 2 min).
-3. **Éditeur** : indiquez votre nom, relisez chaque ligne et cliquez **Valider** (raccourcis **J/K** pour naviguer, **V** pour valider, **X** pour rejeter). Un brouillon non validé reste muet.
+3. **Éditeur** : indiquez votre nom, relisez chaque ligne et cliquez **Valider** (raccourcis **J/K** pour naviguer, **V** pour valider, **X** pour rejeter), ou **Tout valider** une fois la relecture faite. Un brouillon non validé reste muet.
 4. **Export → Générer les voix des lignes validées → Générer l'export**, puis téléchargez `film_audiodecrit.mp4`.
 
 ### Vidéos pour tester
@@ -103,7 +103,7 @@ flowchart LR
   API --> VAD["Silero VAD<br/>(repli webrtcvad)"]
   API --> ASR["ASR : faster-whisper | demo"]
   API --> VLM["VLM : Gemini | OpenAI-compatible | demo"]
-  API --> TTS["TTS : edge-tts | espeak-ng | demo<br/>+ voix humaine"]
+  API --> TTS["TTS : edge-tts | espeak-ng | demo"]
   API --> ML["Modèle ML (scikit-learn)<br/>quels silences décrire ?"]
   API <--> DB[("SQLite + ./data")]
   ASR -.-> M[("/models<br/>téléchargé à la demande")]
@@ -120,8 +120,8 @@ Détails : [docs/architecture.md](docs/architecture.md) · API : [docs/api.md](d
 | 2 | **Analyse** | Extraction de l'audio en 16 kHz, détection de la parole, transcription horodatée, **silences ≥ 1,5 s** (avec une marge de 0,25 s), changements de plan, **découpage des longs silences en créneaux d'environ 10 s** (aux changements de plan), **score de pertinence ML** de chaque créneau, **1 à 3 images clés par créneau** | FFmpeg, Silero VAD, faster-whisper, scikit-learn |
 | 3 | **Compréhension visuelle** | Le VLM reçoit les images clés, le dialogue autour et la distribution. **Il ne fait pas de reconnaissance faciale et n'invente rien** ; en cas d'incertitude, la ligne est marquée « À relire » | Gemini / OpenAI-compatible / demo |
 | 4 | **Brouillons** | Description concise qui ne répète pas le dialogue, raccourcie ou signalée si elle dépasse la durée du silence (estimation en mots par seconde selon la langue) | `fit_to_gap` |
-| 5 | **Éditeur humain** | Lecture, frise, transcription, modification du texte et du minutage, ajout manuel, suppression, régénération avec consigne, validation et rejet, raccourcis clavier. États : `BROUILLON IA` → `MODIFIÉ PAR UN HUMAIN` → `VALIDÉ PAR UN HUMAIN` (nom et date) | React |
-| 6 | **Voix** | Synthèse pour les lignes validées uniquement. Si la voix arabe ou darija est insuffisante : **enregistrement au micro ou import d'une voix humaine**, par ligne ou en piste complète. Accélération légère ou coupe pour ne jamais empiéter sur le dialogue | edge-tts, espeak-ng |
+| 5 | **Éditeur humain** | Lecture, frise, transcription, modification du texte et du minutage, ajout manuel, suppression, régénération avec consigne, validation et rejet (ligne par ligne ou **« Tout valider »** après relecture), raccourcis clavier. États : `BROUILLON IA` → `MODIFIÉ PAR UN HUMAIN` → `VALIDÉ PAR UN HUMAIN` (nom et date) | React |
+| 6 | **Voix** | Synthèse vocale pour les lignes validées uniquement : la voix est toujours générée, l'humain travaille sur le texte. Accélération légère ou coupe pour ne jamais empiéter sur le dialogue | edge-tts, espeak-ng |
 | 7 | **Mixage et export** | Atténuation de la bande originale pendant les descriptions. Fichiers produits : `film_audiodecrit.mp4` (piste AD mixée + piste originale), `ad_track.mp3/.wav`, `description.vtt` (kind=descriptions), `description.ttml`, `credits.txt`, `script_ayant_droit.json`, `.zip` | FFmpeg |
 
 S'y ajoute la page **Retours testeurs** : compréhension 1–5, préférence **arabe standard / darija / français**, commentaire libre, consentement et synthèse.
@@ -189,9 +189,8 @@ Détails : [docs/ethics.md](docs/ethics.md) · Plan de validation : [docs/valida
 - ✅ Calcul des silences, détection des changements de plan, découpage des longs silences en créneaux d'environ 10 s, 1 à 3 images clés par créneau
 - ✅ **Modèle ML entraîné sur des descriptions humaines** (QuerYD) : score de pertinence par créneau, sélection des créneaux à rédiger, bouton « Rédiger ici », processus complet dans [`ml/`](ml/) (données, variables, entraînement, évaluation, rapport)
 - ✅ Brouillons VLM (Gemini, OpenAI-compatible, demo), ajustés à la durée, signalés en cas de faible confiance, nouvelles tentatives automatiques si Gemini est surchargé
-- ✅ Éditeur : modifier, recaler (refus serveur si chevauchement avec un dialogue), ajouter, supprimer, régénérer avec consigne, valider (nom obligatoire), rejeter, rouvrir, historique, filtres, aperçu avec l'AD, raccourcis **J/K/V/X/P/Alt+S/?**
+- ✅ Éditeur : modifier, recaler (refus serveur si chevauchement avec un dialogue), ajouter, supprimer, régénérer avec consigne, valider (nom obligatoire), **tout valider en une fois** (nom obligatoire, lignes trop longues exclues), rejeter, rouvrir, historique, filtres, aperçu avec l'AD, raccourcis **J/K/V/X/P/Alt+S/?**
 - ✅ Synthèse vocale réelle avec edge-tts (`fr-FR-DeniseNeural`, `ar-TN-ReemNeural`), espeak-ng hors ligne, bip de démonstration signalé
-- ✅ Voix humaine : enregistrement au micro ou import par ligne, ou piste complète
 - ✅ Mixage avec atténuation de la bande originale, MP4 à 2 pistes, export AD MP3/WAV, WebVTT, TTML, crédits, script pour l'ayant droit, ZIP
 - ✅ Tableau de bord, historique des projets, statistiques, suivi de progression des tâches (live regions ARIA)
 - ✅ Page de retours des testeurs aveugles, avec synthèse
@@ -262,7 +261,7 @@ cd ../frontend && npm run build
 - **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Basira décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
 - **Modèle ML** : entraîné sur 17 vidéos seulement, avec des descriptions bénévoles en anglais. Il apprend *où* décrire, pas *quoi* ni dans quelle langue, et ne bat pas encore la règle « tout décrire » (voir [les résultats](#apprentissage-automatique--où-décrire-)). Son transfert vers des films tunisiens reste à vérifier.
-- **Darija** : Whisper générique transcrit mal la darija et l'alternance arabe/français ; la voix `ar-TN` lit le darija de façon approximative. D'où l'enregistrement de voix humaine et le fine-tuning prévu.
+- **Darija** : Whisper générique transcrit mal la darija et l'alternance arabe/français ; la voix `ar-TN` lit le darija de façon approximative, ce qui est signalé à l'audiodescripteur·rice. D'où le fine-tuning prévu.
 - **edge-tts** nécessite Internet ; hors ligne, l'application bascule sur espeak-ng (voix robotique) puis sur un bip, en le signalant.
 - La détection de scène par score FFmpeg ne repère pas toujours les fondus progressifs ; une image clé au milieu de chaque silence est toujours extraite.
 - Débit de parole estimé en mots par seconde : c'est une approximation, la durée réelle de l'audio est vérifiée au moment de la voix.
@@ -298,4 +297,4 @@ cd ../frontend && npm run build
 
 ## English summary
 
-**Basira** is a human-in-the-loop **AI audio description co-pilot** for Tunisian and Francophone films. It finds silent gaps (FFmpeg + Silero VAD + faster-whisper), extracts only 1–3 keyframes per gap, and asks a vision-language model (Gemini, any OpenAI-compatible endpoint, or a clearly-labelled DEMO provider) for short drafts in **French, Modern Standard Arabic or Tunisian darija**. A human describer edits, re-times, regenerates, **validates (by name) or rejects every line**; nothing is ever auto-validated and only validated lines are voiced and exported. Long silences are split into ~10 s slots, and a **scikit-learn model trained on human audio descriptions** (QuerYD/YouDescribe, 17 training / 13 unseen test videos, full report in `ml/reports/`) scores each slot; the human can still draft anywhere. Voice comes from edge-tts/espeak-ng or **human recordings**. Exports: ducked MP4, AD track, WebVTT (kind=descriptions, RTL-aware), TTML, credits and a script delivered to the rights holder. Includes a blind-tester feedback page, FR/EN UI, Lighthouse accessibility 100, Docker image (`docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest`) and CI. Without API keys it runs in an explicit **DEMO MODE**.
+**Basira** is a human-in-the-loop **AI audio description co-pilot** for Tunisian and Francophone films. It finds silent gaps (FFmpeg + Silero VAD + faster-whisper), extracts only 1–3 keyframes per gap, and asks a vision-language model (Gemini, any OpenAI-compatible endpoint, or a clearly-labelled DEMO provider) for short drafts in **French, Modern Standard Arabic or Tunisian darija**. A human describer edits, re-times, regenerates, **validates (by name, line by line or all at once) or rejects every line**; nothing is ever auto-validated and only validated lines are voiced and exported. Long silences are split into ~10 s slots, and a **scikit-learn model trained on human audio descriptions** (QuerYD/YouDescribe, 17 training / 13 unseen test videos, full report in `ml/reports/`) scores each slot; the human can still draft anywhere. Voice comes from edge-tts/espeak-ng. Exports: ducked MP4, AD track, WebVTT (kind=descriptions, RTL-aware), TTML, credits and a script delivered to the rights holder. Includes a blind-tester feedback page, FR/EN UI, Lighthouse accessibility 100, Docker image (`docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest`) and CI. Without API keys it runs in an explicit **DEMO MODE**.

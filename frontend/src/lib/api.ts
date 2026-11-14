@@ -73,7 +73,6 @@ export interface ProjectSummary {
   error: string;
   created_at: string;
   video_url: string;
-  voice_track_url: string;
   cast: CastMember[];
   counts: Record<Status, number>;
   needs_review: number;
@@ -166,6 +165,8 @@ export const api = {
     request<Description>(`/api/descriptions/${id}`, json("PATCH", body)),
   deleteDescription: (id: string) => request<void>(`/api/descriptions/${id}`, { method: "DELETE" }),
   validate: (id: string, validator: string) => request<Description>(`/api/descriptions/${id}/validate`, json("POST", { validator })),
+  validateAll: (pid: string, validator: string) =>
+    request<{ validated: number; blocked: string[] }>(`/api/projects/${pid}/validate-all`, json("POST", { validator })),
   reject: (id: string, by: string, reason = "") => request<Description>(`/api/descriptions/${id}/reject`, json("POST", { by, reason })),
   reopen: (id: string, by: string) => request<Description>(`/api/descriptions/${id}/reopen`, json("POST", { by })),
   regenerate: (id: string, hint: string, language?: Lang) =>
@@ -173,18 +174,7 @@ export const api = {
   draftGap: (gid: number) => request<Description>(`/api/gaps/${gid}/draft`, { method: "POST" }),
   tts: (id: string) => request<Description>(`/api/descriptions/${id}/tts`, { method: "POST" }),
   ttsAll: (pid: string) => request<Job>(`/api/projects/${pid}/tts`, { method: "POST" }),
-  uploadVoice: (id: string, file: Blob, name: string) => {
-    const fd = new FormData();
-    fd.append("file", file, name);
-    return request<Description>(`/api/descriptions/${id}/voice`, { method: "POST", body: fd });
-  },
   deleteVoice: (id: string) => request<Description>(`/api/descriptions/${id}/voice`, { method: "DELETE" }),
-  uploadVoiceTrack: (pid: string, file: File) => {
-    const fd = new FormData();
-    fd.append("file", file, file.name);
-    return request<ProjectSummary>(`/api/projects/${pid}/voice-track`, { method: "POST", body: fd });
-  },
-  deleteVoiceTrack: (pid: string) => request<ProjectSummary>(`/api/projects/${pid}/voice-track`, { method: "DELETE" }),
   export: (pid: string) => request<Job>(`/api/projects/${pid}/export`, { method: "POST" }),
   exports: (pid: string) =>
     request<{ files: { name: string; size: number; url: string }[]; generated_at: string | null }>(`/api/projects/${pid}/export`),
