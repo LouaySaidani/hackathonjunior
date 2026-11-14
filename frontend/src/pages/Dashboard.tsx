@@ -91,26 +91,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* How it works, like the "La solution" slide: a white panel holding three dark cards */}
-      <section aria-labelledby="how-h" className="panel-paper mb-10 p-6 md:p-8">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {(["step1", "step2", "step3"] as const).map((k, i) => (
-            <div key={k} className="rounded-2xl bg-surface-3 p-6 text-center text-ink">
-              <h3 className="font-display text-2xl">
-                {i + 1} · {t(`${k}Title` as Key)}
-              </h3>
-              <p className="mt-3 font-light leading-relaxed text-[#e6e6e6]">{t(`${k}Text` as Key)}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 grid grid-cols-1 items-center gap-6 md:grid-cols-[auto_1fr] md:px-6">
-          <h2 id="how-h" className="font-display text-5xl leading-none md:text-6xl">
-            {t("howTitle")}
-          </h2>
-          <p className="max-w-2xl text-lg font-light leading-relaxed">{t("howText")}</p>
-        </div>
-      </section>
-
       <section aria-labelledby="stats-h" className="mb-8">
         <h2 id="stats-h" className="sr-only">
           Statistiques
