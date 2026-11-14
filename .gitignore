@@ -17,3 +17,6 @@ ml/data/
 
 # Test videos (Blender open movies, CC-BY) - large, not committed
 videos_test/
+
+# Local sample videos chosen with SAMPLE_VIDEO (often copyrighted): never committed
+samples/local/

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from sqlmodel import Session, delete, select
 
-from .config import Settings, get_settings
+from .config import BUNDLED_SAMPLE_NAME, Settings, get_settings
 from .db import session_scope
 from .jobs import JobContext
 from .models import (
@@ -55,8 +55,14 @@ def absolute(relpath: str, settings: Settings | None = None) -> Path:
     return settings.data_dir / relpath
 
 
+def has_reference_script(project: Project) -> bool:
+    """Only the bundled sample clip has a hand-written transcript and script; any other sample video
+    (SAMPLE_VIDEO) goes through the real pipeline like an imported film."""
+    return project.is_sample and project.filename == BUNDLED_SAMPLE_NAME
+
+
 def sidecar_for(project: Project, settings: Settings) -> Path | None:
-    if project.is_sample:
+    if has_reference_script(project):
         return settings.samples_dir / "sample.transcript.json"
     return None
 
@@ -254,7 +260,7 @@ def build_request(s: Session, project: Project, gap_start: float, gap_end: float
         frames=[absolute(f.path) for f in frames], frame_times=[f.time for f in frames],
         dialogue_before=ctxd["before"], dialogue_after=ctxd["after"], previous_description=ctxd["prev"],
         cast=json.loads(project.cast_json or "[]"), scene_change=any(f.reason == "scene_change" for f in frames),
-        film_title=project.title, is_sample=project.is_sample, hint=hint,
+        film_title=project.title, is_sample=has_reference_script(project), hint=hint,
     )
 
 

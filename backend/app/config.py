@@ -13,6 +13,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
 
+BUNDLED_SAMPLE_NAME = "sample_medina.mp4"  # CC0 clip shipped with a reference transcript and script
+
+
 class Settings(BaseSettings):
     # Root .env first, then the CWD one (later files take priority), so `cd backend && uvicorn ...` works too.
     model_config = SettingsConfigDict(env_file=(ROOT_DIR / ".env", ".env"), env_file_encoding="utf-8", extra="ignore")
@@ -24,6 +27,10 @@ class Settings(BaseSettings):
     frontend_dist: Path = ROOT_DIR / "frontend" / "dist"
     max_upload_mb: int = 500
     seed_sample: bool = True
+    # Video of the sample project. Empty = the bundled CC0 clip, the only one with a reference
+    # transcript and script. A local video (e.g. samples/local/...) gets real ASR and drafting.
+    sample_video: str = ""
+    sample_title: str = ""
 
     # --- AI providers ---
     # ASR: whisper | demo | auto (whisper, fallback to demo if the model cannot be loaded)
@@ -64,6 +71,17 @@ class Settings(BaseSettings):
     gap_selection: str = "auto"
     gap_model_path: Path = ROOT_DIR / "ml" / "artifacts" / "gap_scorer.joblib"
     gap_score_threshold: float = 0.0  # 0 = use the threshold chosen during training
+
+    @property
+    def bundled_sample(self) -> Path:
+        return self.samples_dir / BUNDLED_SAMPLE_NAME
+
+    @property
+    def resolved_sample_video(self) -> Path:
+        if not self.sample_video:
+            return self.bundled_sample
+        path = Path(self.sample_video)
+        return path if path.is_absolute() else ROOT_DIR / path
 
     @property
     def projects_dir(self) -> Path:

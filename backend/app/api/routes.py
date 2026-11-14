@@ -203,14 +203,18 @@ async def create_project(
 
 def create_sample_project(s: Session) -> Project:
     st = get_settings()
-    src = st.samples_dir / "sample_medina.mp4"
-    if not src.exists():
-        raise HTTPException(404, "Clip d'exemple absent")
-    p = Project(title="Exemple — Une journée à Sidi Bou Saïd (clip synthétique)", language="fr",
-                dialogue_language="fr", consent=True, is_sample=True, filename=src.name,
-                cast_json=json.dumps([{"name": "La voyageuse", "description": "silhouette claire qui marche"}],
-                                     ensure_ascii=False))
-    dest = service.project_dir(p.id) / "source.mp4"
+    src = st.resolved_sample_video
+    if not src.is_file():
+        raise HTTPException(404, f"Clip d'exemple absent : {src.name}")
+    if src == st.bundled_sample:
+        p = Project(title="Exemple — Une journée à Sidi Bou Saïd (clip synthétique)", language="fr",
+                    dialogue_language="fr", consent=True, is_sample=True, filename=src.name,
+                    cast_json=json.dumps([{"name": "La voyageuse", "description": "silhouette claire qui marche"}],
+                                         ensure_ascii=False))
+    else:  # a local sample video chosen with SAMPLE_VIDEO: no reference script, no preset cast
+        p = Project(title=st.sample_title or f"Exemple — {src.stem}", language="fr", dialogue_language="auto",
+                    consent=True, is_sample=True, filename=src.name)
+    dest = service.project_dir(p.id) / f"source{src.suffix.lower()}"
     shutil.copyfile(src, dest)
     meta = media.probe(dest)
     for k in ("duration", "width", "height", "fps", "video_codec", "audio_codec"):

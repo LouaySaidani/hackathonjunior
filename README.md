@@ -221,6 +221,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `GAP_SELECTION` | `auto` | `auto` (modèle ML s'il est entraîné, sinon tous les silences) · `model` · `all` |
 | `GAP_SCORE_THRESHOLD` / `GAP_MODEL_PATH` | `0` (seuil appris) / `ml/artifacts/gap_scorer.joblib` | Sélection ML des silences |
 | `MAX_UPLOAD_MB`, `SEED_SAMPLE`, `DATA_DIR`, `MODELS_DIR` | `500`, `true`, `./data`, `./models` | Stockage |
+| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | — (clip CC0 fourni) | Vidéo du projet d'exemple. Mettez une vidéo locale dans `samples/local/` (ignoré par git) pour l'utiliser à la place ; seul le clip fourni a un script de référence en DEMO MODE |
 
 ## Développement local
 
