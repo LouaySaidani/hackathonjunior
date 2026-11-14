@@ -1,4 +1,4 @@
-.PHONY: install dev backend frontend test lint build docker up notebook sample
+.PHONY: install dev backend frontend test lint build docker up notebook sample ml ml-train
 
 PY ?= python3.11
 VENV = .venv
@@ -35,3 +35,12 @@ notebook:
 
 sample:
 	bash scripts/make_sample.sh
+
+# ML: download QuerYD videos, train the gap-relevance model, evaluate on unseen videos
+ml:
+	$(BIN)/pip install -r ml/requirements.txt
+	$(BIN)/python ml/run_all.py --train 17 --test 13
+
+# Re-train and re-evaluate on already downloaded videos
+ml-train:
+	$(BIN)/python ml/run_all.py --skip-download

@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -121,7 +122,9 @@ class GeminiVision(VisionProvider):
     def __init__(self, settings: Settings, client: httpx.Client | None = None):
         self.key = settings.gemini_api_key
         self.model = settings.gemini_model
-        self.client = client or httpx.Client(timeout=60)
+        self.client = client or httpx.Client(timeout=180)
+        self.retries = 3
+        self.backoff = 4.0
 
     def draft(self, req: DraftRequest) -> Draft:
         system = SYSTEM_PROMPT.format(max_words=req.max_words, duration=req.end - req.start,
@@ -134,12 +137,24 @@ class GeminiVision(VisionProvider):
             "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"},
         }
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
-        resp = self.client.post(url, json=body, headers={"x-goog-api-key": self.key})
-        resp.raise_for_status()
-        data = resp.json()
+        data = self._post(url, body)
         raw = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
         text, conf, unc = parse_json_answer(raw)
         return Draft(text, conf, self.name, self.model, unc)
+
+    def _post(self, url: str, body: dict) -> dict:
+        """POST with retries on transient failures (429 / 5xx / timeouts): Gemini returns 503 under high demand."""
+        for attempt in range(self.retries + 1):
+            try:
+                resp = self.client.post(url, json=body, headers={"x-goog-api-key": self.key})
+                if resp.status_code not in (429, 500, 502, 503, 504) or attempt == self.retries:
+                    resp.raise_for_status()
+                    return resp.json()
+            except httpx.TransportError:
+                if attempt == self.retries:
+                    raise
+            time.sleep(self.backoff * (2 ** attempt))
+        raise RuntimeError("unreachable")
 
 
 class OpenAICompatibleVision(VisionProvider):

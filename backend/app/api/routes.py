@@ -27,7 +27,7 @@ from ..models import (
     TranscriptSegment,
     utcnow,
 )
-from ..pipeline import media
+from ..pipeline import gapscore, media
 from ..pipeline.fit import estimate_seconds
 from ..pipeline.vad import overlaps
 from ..providers.vision import get_vision
@@ -117,6 +117,23 @@ def system_info():
         "max_upload_mb": st.max_upload_mb,
         "languages": sorted(LANGS),
         "confidence_threshold": st.confidence_threshold,
+        "gap_model": _gap_model_info(st),
+    }
+
+
+def _gap_model_info(st) -> dict:  # noqa: ANN001
+    info = gapscore.model_info(st.gap_model_path)
+    active = st.gap_selection.lower() != "all" and info is not None and gapscore.get_gap_scorer(st.gap_model_path)
+    if not info:
+        return {"active": False, "selection": st.gap_selection}
+    return {
+        "active": bool(active),
+        "selection": st.gap_selection,
+        "threshold": st.gap_score_threshold or info.get("threshold"),
+        "model": info.get("model"),
+        "trained_at": info.get("trained_at"),
+        "train_videos": info.get("train_videos"),
+        "test_metrics": info.get("test_metrics"),
     }
 
 
@@ -443,6 +460,23 @@ def regenerate_description(did: str, body: RegenBody, s: Session = Depends(get_s
         d = service.regenerate(did, body.hint, body.language)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(502, f"Échec de la régénération : {exc}") from exc
+    return desc_out(d)
+
+
+@router.post("/gaps/{gid}/draft", status_code=201)
+def draft_gap(gid: int, s: Session = Depends(get_session)):
+    """Draft a description in any gap, including those the ML model did not prioritise."""
+    g = s.get(Gap, gid)
+    if not g:
+        raise HTTPException(404, "Silence introuvable")
+    if jobs.active_job(g.project_id):
+        raise HTTPException(409, "Une tâche est déjà en cours pour ce projet.")
+    try:
+        d = service.draft_gap(gid)
+    except FileExistsError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(502, f"Échec de la rédaction : {exc}") from exc
     return desc_out(d)
 
 

@@ -14,7 +14,8 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Root .env first, then the CWD one (later files take priority), so `cd backend && uvicorn ...` works too.
+    model_config = SettingsConfigDict(env_file=(ROOT_DIR / ".env", ".env"), env_file_encoding="utf-8", extra="ignore")
 
     # --- storage ---
     data_dir: Path = ROOT_DIR / "data"
@@ -34,7 +35,7 @@ class Settings(BaseSettings):
     # VLM / LLM for drafting: gemini | openai | demo | auto (gemini if key, openai if key, else demo)
     vlm_provider: str = "auto"
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"
@@ -49,10 +50,17 @@ class Settings(BaseSettings):
     vad_engine: str = "silero"  # silero | webrtc
     min_gap_seconds: float = 1.5
     gap_padding_seconds: float = 0.25
+    max_slot_seconds: float = 10.0  # long silences are split into slots (at shot changes); 0 = never split
     scene_threshold: float = 0.3
     max_keyframes_per_gap: int = 3
     duck_volume: float = 0.25
     confidence_threshold: float = 0.6
+
+    # --- ML gap selection (model trained by ml/train.py on human audio descriptions) ---
+    # auto: use the model if a trained file exists, otherwise draft every gap | model | all
+    gap_selection: str = "auto"
+    gap_model_path: Path = ROOT_DIR / "ml" / "artifacts" / "gap_scorer.joblib"
+    gap_score_threshold: float = 0.0  # 0 = use the threshold chosen during training
 
     @property
     def projects_dir(self) -> Path:

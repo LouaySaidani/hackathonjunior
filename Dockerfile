@@ -34,6 +34,7 @@ ENV PATH=/opt/venv/bin:$PATH \
 WORKDIR /app
 COPY --chown=app:app backend/ backend/
 COPY --chown=app:app samples/ samples/
+COPY --chown=app:app ml/artifacts/ ml/artifacts/
 COPY --from=web --chown=app:app /web/dist frontend/dist
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

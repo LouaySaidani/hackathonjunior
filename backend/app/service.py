@@ -26,7 +26,9 @@ from .models import (
 from .pipeline import export as exp
 from .pipeline import media, mix
 from .pipeline.fit import estimate_seconds, fit_to_gap, max_words
-from .pipeline.vad import compute_gaps, detect_speech, merge_intervals, overlaps
+from .pipeline.gapscore import MediaSignals, compute_gap_features, get_gap_scorer
+from .pipeline.gapscore import select as select_gaps
+from .pipeline.vad import combine_speech, compute_gaps, detect_speech, overlaps, split_long_gaps
 from .providers import asr as asr_mod
 from .providers import tts as tts_mod
 from .providers.vision import DraftRequest, get_vision
@@ -120,16 +122,21 @@ def analyze(project_id: str, ctx: JobContext) -> dict:
         ctx.update(0.25, "asr", f"Transcription des dialogues ({settings.asr_provider}/{settings.whisper_model})…")
         result = asr_mod.transcribe(settings, wav, lang_hint, sidecar)
 
-        # 4. gaps. VAD is authoritative for timing (ASR segment boundaries often span silences);
-        #    ASR segments are only added where VAD found no speech at all (VAD miss), to stay conservative.
+        # 4. gaps (VAD timing, ASR only fills VAD misses - see combine_speech)
         ctx.update(0.55, "gaps", "Calcul des intervalles disponibles pour l'audiodescription…")
-        asr_only = [(seg.start, seg.end) for seg in result.segments if not overlaps((seg.start, seg.end), vad_speech, 0.0)]
-        speech = merge_intervals(vad_speech + asr_only, join_within=0.1)
+        speech = combine_speech(vad_speech, [(seg.start, seg.end) for seg in result.segments])
         gaps = compute_gaps(speech, duration, settings.min_gap_seconds, settings.gap_padding_seconds)
 
         # 5. keyframes (only inside gaps + at scene cuts)
         ctx.update(0.62, "scenes", "Détection des changements de plan…")
         cuts = media.detect_scene_changes(video, settings.scene_threshold)
+        # long silent sequences need several descriptions: split them into slots at shot changes
+        gaps = split_long_gaps(gaps, cuts, settings.max_slot_seconds, settings.min_gap_seconds)
+
+        # 5b. ML: which silences would a human audio describer use?
+        ctx.update(0.66, "ml", "Score de pertinence des silences (modèle ML)…")
+        scores, recommended, selection = score_gaps(settings, video, wav, duration, speech, cuts, gaps)
+
         ctx.update(0.7, "keyframes", f"Extraction de quelques images clés pour {len(gaps)} silences…")
         frames_dir = pdir / "frames"
         shutil.rmtree(frames_dir, ignore_errors=True)
@@ -143,8 +150,8 @@ def analyze(project_id: str, ctx: JobContext) -> dict:
             for a, b in speech:
                 s.add(SpeechRegion(project_id=project_id, start=a, end=b))
             gap_rows = []
-            for a, b in gaps:
-                g = Gap(project_id=project_id, start=a, end=b)
+            for (a, b), sc, rec in zip(gaps, scores, recommended, strict=True):
+                g = Gap(project_id=project_id, start=a, end=b, score=sc, recommended=rec)
                 s.add(g)
                 gap_rows.append(g)
             s.commit()
@@ -179,7 +186,8 @@ def analyze(project_id: str, ctx: JobContext) -> dict:
             s.add(p)
             s.commit()
         return {"gaps": len(gaps), "segments": len(result.segments), "drafts": n, "notes": result.notes,
-                "scene_changes": len(cuts), "vad": vad_engine}
+                "scene_changes": len(cuts), "vad": vad_engine, "gap_selection": selection,
+                "gaps_recommended": sum(recommended)}
     except Exception as exc:
         with session_scope() as s:
             p = s.get(Project, project_id)
@@ -188,6 +196,22 @@ def analyze(project_id: str, ctx: JobContext) -> dict:
                 s.add(p)
                 s.commit()
         raise
+
+
+def score_gaps(settings: Settings, video: Path, wav: Path, duration: float, speech: list[tuple[float, float]],
+               cuts: list[float], gaps: list[tuple[float, float]]) -> tuple[list[float | None], list[bool], str]:
+    """Score each gap with the trained model. Without a model (or GAP_SELECTION=all), every gap is kept."""
+    mode = settings.gap_selection.lower()
+    scorer = get_gap_scorer(settings.gap_model_path) if mode in ("auto", "model") else None
+    if mode == "model" and scorer is None:
+        raise ValueError(f"GAP_SELECTION=model mais aucun modèle entraîné dans {settings.gap_model_path} "
+                         "(voir ml/README.md)")
+    if scorer is None or not gaps:
+        return [None] * len(gaps), [True] * len(gaps), "all"
+    sig = MediaSignals.from_files(video, wav, duration, speech, cuts)
+    scores = scorer.score(compute_gap_features(gaps, sig))
+    threshold = settings.gap_score_threshold or scorer.threshold
+    return list(scores), select_gaps(scores, threshold), "model"
 
 
 def select_keyframe_times(start: float, end: float, cuts: list[float], cap: int = 3) -> list[tuple[float, str]]:
@@ -253,7 +277,8 @@ def draft_all(project_id: str, ctx: JobContext | None = None) -> int:
     settings = get_settings()
     with session_scope() as s:
         p = s.get(Project, project_id)
-        gaps = s.exec(select(Gap).where(Gap.project_id == project_id).order_by(Gap.start)).all()  # type: ignore[arg-type]
+        gaps = s.exec(select(Gap).where(Gap.project_id == project_id, Gap.recommended == True)  # noqa: E712
+                      .order_by(Gap.start)).all()  # type: ignore[arg-type]
         p.vlm_provider = get_vision(settings).name
         p.vlm_model = get_vision(settings).model
         p.demo_mode = p.vlm_provider == "demo"
@@ -261,19 +286,45 @@ def draft_all(project_id: str, ctx: JobContext | None = None) -> int:
         for i, g in enumerate(gaps):
             if ctx:
                 ctx.update(0.8 + 0.2 * i / max(1, len(gaps)), "drafts", f"Brouillon {i + 1}/{len(gaps)}…")
-            d = make_draft(s, p, g.start, g.end, g.id, p.language)
-            desc = Description(project_id=project_id, gap_id=g.id, start=d["start"], end=d["end"], text=d["text"],
-                               language=p.language, origin="ai", status=DescriptionStatus.AI_DRAFT,
-                               confidence=d["confidence"], flags_json=json.dumps(d["flags"]),
-                               provider=d["provider"], model=d["model"], ai_original_text=d["text"])
-            compute_flags(desc, settings.confidence_threshold)
-            add_history(desc, "ai_draft", d["provider"], "; ".join(d["uncertain"]))
-            s.add(desc)
+            _new_ai_description(s, p, g, settings)
             s.commit()  # commit each draft so the UI can stream them
             n += 1
         s.add(p)
         s.commit()
     return n
+
+
+def _new_ai_description(s: Session, p: Project, g: Gap, settings: Settings) -> Description:
+    d = make_draft(s, p, g.start, g.end, g.id, p.language)
+    desc = Description(project_id=p.id, gap_id=g.id, start=d["start"], end=d["end"], text=d["text"],
+                       language=p.language, origin="ai", status=DescriptionStatus.AI_DRAFT,
+                       confidence=d["confidence"], flags_json=json.dumps(d["flags"]),
+                       provider=d["provider"], model=d["model"], ai_original_text=d["text"])
+    compute_flags(desc, settings.confidence_threshold)
+    detail = "; ".join(d["uncertain"])
+    if g.score is not None:
+        detail = f"pertinence ML {g.score:.2f}" + (f"; {detail}" if detail else "")
+    add_history(desc, "ai_draft", d["provider"], detail)
+    s.add(desc)
+    return desc
+
+
+def draft_gap(gap_id: int) -> Description:
+    """Human override of the model: draft a description in a gap the model did not prioritise."""
+    settings = get_settings()
+    with session_scope() as s:
+        g = s.get(Gap, gap_id)
+        if not g:
+            raise LookupError("Silence introuvable")
+        existing = s.exec(select(Description).where(Description.gap_id == gap_id,
+                                                    Description.status != DescriptionStatus.REJECTED)).first()
+        if existing:
+            raise FileExistsError("Ce silence a déjà une description")
+        p = s.get(Project, g.project_id)
+        desc = _new_ai_description(s, p, g, settings)
+        s.commit()
+        s.refresh(desc)
+        return Description.model_validate(desc)
 
 
 def regenerate(desc_id: str, hint: str = "", language: str | None = None) -> Description:

@@ -1,10 +1,10 @@
-import { fmtTime, type Description, type Interval } from "../lib/api";
+import { fmtTime, type Description, type Gap, type Interval } from "../lib/api";
 import { useT } from "../lib/i18n";
 
 interface Props {
   duration: number;
   speech: Interval[];
-  gaps: Interval[];
+  gaps: (Interval & Partial<Pick<Gap, "score" | "recommended">>)[];
   descriptions?: Description[];
   current: number;
   activeId?: string | null;
@@ -35,6 +35,12 @@ export default function Timeline({ duration, speech, gaps, descriptions = [], cu
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-4 rounded-sm border border-teal/60 bg-gap" aria-hidden="true" /> {t("gapLegend")}
         </span>
+        {gaps.some((g) => g.recommended === false) && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-4 rounded-sm border border-dashed border-subtle bg-gap/25" aria-hidden="true" />{" "}
+            {t("gapSkippedLegend")}
+          </span>
+        )}
         {descriptions.length > 0 && (
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-4 rounded-sm bg-ai" aria-hidden="true" /> {t("adLegend")}
@@ -57,7 +63,9 @@ export default function Timeline({ duration, speech, gaps, descriptions = [], cu
         {gaps.map((g) => (
           <div
             key={`g${g.id}`}
-            className="absolute top-5 h-5 rounded-sm border border-teal/50 bg-gap"
+            className={`absolute top-5 h-5 rounded-sm border ${
+              g.recommended === false ? "border-dashed border-subtle bg-gap/25" : "border-teal/50 bg-gap"
+            }`}
             style={{ left: pct(g.start), width: `calc(${pct(g.end)} - ${pct(g.start)})` }}
           />
         ))}

@@ -11,3 +11,6 @@ frontend/dist/
 *.egg-info/
 .ipynb_checkpoints/
 *.log
+
+# ML: downloaded videos, metadata and features (never committed)
+ml/data/

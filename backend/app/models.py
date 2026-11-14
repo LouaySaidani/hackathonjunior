@@ -81,6 +81,8 @@ class Gap(SQLModel, table=True):
     project_id: str = Field(index=True)
     start: float
     end: float
+    score: float | None = None  # ML relevance (0..1), None when no trained model was used
+    recommended: bool = True  # drafted automatically (score >= threshold, or no model)
 
 
 class Keyframe(SQLModel, table=True):

@@ -86,10 +86,26 @@ export interface Interval {
   end: number;
 }
 
+/** A silence. `score` is the ML relevance (null when no trained model was used). */
+export interface Gap extends Interval {
+  score: number | null;
+  recommended: boolean;
+}
+
+export interface GapModelInfo {
+  active: boolean;
+  selection: string;
+  threshold?: number;
+  model?: string;
+  trained_at?: string;
+  train_videos?: number;
+  test_metrics?: { videos: number; gaps: number; precision: number; recall: number; f1: number; selected_share: number };
+}
+
 export interface Project extends ProjectSummary {
   transcript: (Interval & { text: string })[];
   speech: Interval[];
-  gaps: Interval[];
+  gaps: Gap[];
   keyframes: { id: number; gap_id: number; time: number; url: string; reason: string }[];
   descriptions: Description[];
 }
@@ -100,6 +116,7 @@ export interface SystemInfo {
   min_gap_seconds: number;
   max_upload_mb: number;
   confidence_threshold: number;
+  gap_model: GapModelInfo;
 }
 
 export class ApiError extends Error {
@@ -153,6 +170,7 @@ export const api = {
   reopen: (id: string, by: string) => request<Description>(`/api/descriptions/${id}/reopen`, json("POST", { by })),
   regenerate: (id: string, hint: string, language?: Lang) =>
     request<Description>(`/api/descriptions/${id}/regenerate`, json("POST", { hint, language })),
+  draftGap: (gid: number) => request<Description>(`/api/gaps/${gid}/draft`, { method: "POST" }),
   tts: (id: string) => request<Description>(`/api/descriptions/${id}/tts`, { method: "POST" }),
   ttsAll: (pid: string) => request<Job>(`/api/projects/${pid}/tts`, { method: "POST" }),
   uploadVoice: (id: string, file: Blob, name: string) => {

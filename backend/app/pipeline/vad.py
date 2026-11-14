@@ -6,6 +6,7 @@ inside these gaps, so they can never overlap dialogue.
 
 from __future__ import annotations
 
+import math
 import wave
 from pathlib import Path
 
@@ -46,6 +47,36 @@ def compute_gaps(
             gaps.append((round(g_start, 3), round(g_end, 3)))
         cursor = max(cursor, s_end)
     return gaps
+
+
+def split_long_gaps(gaps: list[Interval], cuts: list[float], max_len: float = 10.0,
+                    min_len: float = 1.5) -> list[Interval]:
+    """Split long silences into consecutive slots of at most ~`max_len` s, preferably at shot changes.
+
+    A long silent sequence (music, action, a film without dialogue) needs several descriptions, not
+    one: human describers place one every ~10-25 s. Each slot then gets its own draft and ML score.
+    `max_len <= 0` disables splitting.
+    """
+    if max_len <= 0:
+        return list(gaps)
+    out: list[Interval] = []
+    for a, b in gaps:
+        cur = a
+        while b - cur > max_len:
+            inside = [c for c in cuts if cur + min_len <= c <= cur + max_len and b - c >= min_len]
+            # no shot change: equal slots, so the last one is not a useless sliver
+            nxt = max(inside) if inside else cur + (b - cur) / math.ceil((b - cur) / max_len)
+            out.append((round(cur, 3), round(nxt, 3)))
+            cur = nxt
+        out.append((round(cur, 3), round(b, 3)))
+    return out
+
+
+def combine_speech(vad_speech: list[Interval], asr_segments: list[Interval]) -> list[Interval]:
+    """VAD is authoritative for timing (ASR segment boundaries often span silences); ASR segments are
+    only added where VAD found no speech at all (VAD miss), to stay conservative."""
+    asr_only = [seg for seg in asr_segments if not overlaps(seg, vad_speech, 0.0)]
+    return merge_intervals(vad_speech + asr_only, join_within=0.1)
 
 
 def overlaps(interval: Interval, speech: list[Interval], tolerance: float = 0.05) -> bool:

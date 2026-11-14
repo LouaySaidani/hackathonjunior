@@ -20,6 +20,7 @@ def _env(tmp_path_factory):
         SEED_SAMPLE="false",
         GEMINI_API_KEY="",
         OPENAI_API_KEY="",
+        GAP_SELECTION="all",  # deterministic: a trained model in ml/artifacts must not change these tests
     )
     from app.config import get_settings
     from app.db import reset_engine

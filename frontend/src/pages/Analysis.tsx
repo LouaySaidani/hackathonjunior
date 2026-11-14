@@ -1,14 +1,14 @@
-import { CheckCircle2, Circle, Loader2, PencilRuler, RefreshCw, Play, Scissors } from "lucide-react";
+import { CheckCircle2, Circle, CircleMinus, Loader2, PencilRuler, RefreshCw, Play, Scissors, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Timeline from "../components/Timeline";
 import { ErrorBox, Notice, PageHeader, ProgressBar, Spinner, useJob } from "../components/ui";
-import { api, fmtTime } from "../lib/api";
+import { api, fmtTime, type GapModelInfo } from "../lib/api";
 import { useT, type Key } from "../lib/i18n";
 import { useProject, useVideoTime } from "../lib/useProject";
 import { useTitle } from "../lib/useTitle";
 
-const STEPS = ["audio", "vad", "asr", "gaps", "scenes", "keyframes", "drafts"] as const;
+const STEPS = ["audio", "vad", "asr", "gaps", "scenes", "ml", "keyframes", "drafts"] as const;
 
 export default function Analysis() {
   const { id } = useParams();
@@ -19,6 +19,26 @@ export default function Analysis() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [startError, setStartError] = useState("");
   const job = useJob(jobId, () => reload());
+  const [gapModel, setGapModel] = useState<GapModelInfo | null>(null);
+  const [drafting, setDrafting] = useState<number | null>(null);
+  const [draftError, setDraftError] = useState("");
+
+  useEffect(() => {
+    api.system().then((s) => setGapModel(s.gap_model)).catch(() => setGapModel(null));
+  }, []);
+
+  const draftHere = async (gid: number) => {
+    setDrafting(gid);
+    setDraftError("");
+    try {
+      await api.draftGap(gid);
+      await reload();
+    } catch (e) {
+      setDraftError((e as Error).message);
+    } finally {
+      setDrafting(null);
+    }
+  };
 
   useEffect(() => {
     if (project?.active_job && !jobId) setJobId(project.active_job.id);
@@ -48,6 +68,7 @@ export default function Analysis() {
   const running = job && (job.status === "running" || job.status === "queued");
   const stepIdx = running ? STEPS.indexOf(job.step as (typeof STEPS)[number]) : -1;
   const analyzed = project.status === "ready" || project.status === "analyzed";
+  const scored = project.gaps.some((g) => g.score != null);
 
   return (
     <>
@@ -236,15 +257,61 @@ export default function Analysis() {
               {t("silences")}
             </h2>
             <p className="hint mb-3">{t("gapsCount", { n: project.gaps.length, min: 1.5 })}</p>
-            <ol className="flex flex-wrap gap-2">
-              {project.gaps.map((g) => (
-                <li key={g.id}>
-                  <button type="button" onClick={() => seek(g.start)} className="btn-secondary !px-2.5 !py-1 font-mono text-xs">
-                    {fmtTime(g.start, true)} → {fmtTime(g.end, true)} ({(g.end - g.start).toFixed(1)} s)
-                  </button>
-                </li>
-              ))}
+            {analyzed && project.gaps.length > 0 && (
+              <p className="hint mb-3">
+                {scored
+                  ? t("mlSummary", {
+                      k: project.gaps.filter((g) => g.recommended).length,
+                      n: project.gaps.length,
+                      thr: gapModel?.threshold != null ? Math.round(gapModel.threshold * 100) : "—",
+                    })
+                  : t("mlInactive")}
+                {scored && gapModel?.test_metrics && (
+                  <span className="mt-1 block">
+                    {t("mlTested", {
+                      v: gapModel.test_metrics.videos,
+                      p: Math.round(gapModel.test_metrics.precision * 100),
+                      r: Math.round(gapModel.test_metrics.recall * 100),
+                    })}
+                  </span>
+                )}
+              </p>
+            )}
+            <ol className="space-y-1.5">
+              {project.gaps.map((g) => {
+                const hasDesc = project.descriptions.some((d) => d.gap_id === g.id && d.status !== "rejected");
+                return (
+                  <li key={g.id} className="flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => seek(g.start)} className="btn-secondary !px-2.5 !py-1 font-mono text-xs">
+                      {fmtTime(g.start, true)} → {fmtTime(g.end, true)} ({(g.end - g.start).toFixed(1)} s)
+                    </button>
+                    {g.score != null && (
+                      <span className={`inline-flex items-center gap-1 text-xs ${g.recommended ? "text-teal" : "text-subtle"}`}>
+                        {g.recommended ? <CheckCircle2 size={14} aria-hidden="true" /> : <CircleMinus size={14} aria-hidden="true" />}
+                        {g.recommended ? t("gapRecommended") : t("gapSkipped")} · {t("gapScore", { p: Math.round(g.score * 100) })}
+                      </span>
+                    )}
+                    {analyzed && !hasDesc && (
+                      <button
+                        type="button"
+                        className="btn-secondary !px-2 !py-1 text-xs"
+                        onClick={() => draftHere(g.id)}
+                        disabled={drafting !== null || !!running}
+                        aria-label={`${t("draftHere")} ${fmtTime(g.start, true)}`}
+                      >
+                        {drafting === g.id ? (
+                          <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Sparkles size={14} aria-hidden="true" />
+                        )}
+                        {t("draftHere")}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
+            {draftError && <ErrorBox message={draftError} />}
           </section>
         </div>
       </div>

@@ -47,3 +47,20 @@ def test_real_vad_on_sample(sample_video, tmp_path):
         assert any(abs(a - 3.0) < 0.6 for a, _ in speech), (used, speech)
         # nothing detected in the opening silence
         assert all(a > 2.0 for a, _ in speech), (used, speech)
+
+
+def test_split_long_gaps_prefers_shot_changes():
+    from app.pipeline.vad import split_long_gaps
+
+    # short gaps are untouched, splitting can be disabled
+    assert split_long_gaps([(0.0, 8.0)], [4.0]) == [(0.0, 8.0)]
+    assert split_long_gaps([(0.0, 40.0)], [], max_len=0) == [(0.0, 40.0)]
+    # a 30 s silence with shot changes at 7 s and 18 s is cut there
+    slots = split_long_gaps([(0.0, 30.0)], [7.0, 16.0, 29.5], max_len=10)
+    assert slots[:2] == [(0.0, 7.0), (7.0, 16.0)]  # cut at the shot changes
+    assert slots[-1][1] == 30.0 and all(b - a >= 1.5 for a, b in slots)  # 29.5 is too close to the end
+    # no shot change: regular slots, contiguous, each <= max_len and >= min_len, covering the whole gap
+    slots = split_long_gaps([(5.0, 36.0)], [], max_len=10, min_len=1.5)
+    assert len(slots) == 4 and slots[0][0] == 5.0 and slots[-1][1] == 36.0  # 4 equal slots of 7.75 s
+    assert all(b - a <= 10 + 1e-6 and b - a >= 1.5 for a, b in slots)
+    assert all(slots[i][1] == slots[i + 1][0] for i in range(len(slots) - 1))

@@ -1,0 +1,74 @@
+{
+  "model": "logistic_regression",
+  "features": [
+    "duration",
+    "log_duration",
+    "duration_rank",
+    "rel_position",
+    "is_first",
+    "is_last",
+    "speech_before",
+    "speech_after",
+    "speech_density_30s",
+    "prev_gap_duration",
+    "next_gap_duration",
+    "cuts_in_gap",
+    "cuts_per_sec",
+    "cut_near_start",
+    "cuts_prev_10s",
+    "motion_mean",
+    "motion_max",
+    "brightness",
+    "brightness_change",
+    "visual_novelty",
+    "audio_rms_db",
+    "audio_rms_rel",
+    "audio_active_frac",
+    "audio_centroid"
+  ],
+  "threshold": 0.1399,
+  "threshold_beta": 1.0,
+  "cv": {
+    "logistic_regression": {
+      "average_precision": 0.7935688039051554,
+      "roc_auc": 0.6677489177489178
+    },
+    "random_forest": {
+      "average_precision": 0.7019897177997699,
+      "roc_auc": 0.5542671614100185
+    },
+    "gradient_boosting": {
+      "average_precision": 0.7089077397285419,
+      "roc_auc": 0.5872500515357658
+    }
+  },
+  "cv_at_threshold": {
+    "precision": 0.6942446043165468,
+    "recall": 0.9747474747474747,
+    "f1": 0.8109243697478992
+  },
+  "train_videos": 17,
+  "train_gaps": 296,
+  "train_positive_rate": 0.668918918918919,
+  "label": {
+    "types": [
+      "extended",
+      "inline"
+    ],
+    "before": 1.0,
+    "asr": false
+  },
+  "dataset": "QuerYD / YouDescribe (descriptions humaines bénévoles, anglais)",
+  "sklearn": "1.9.1",
+  "trained_at": "2026-11-14T17:56:38+00:00",
+  "test_metrics": {
+    "videos": 13,
+    "gaps": 276,
+    "precision": 0.6197718631178707,
+    "recall": 0.9644970414201184,
+    "f1": 0.7546296296296295,
+    "average_precision": 0.7373098811717391,
+    "selected_share": 0.9528985507246377,
+    "baseline_f1_all_gaps": 0.7595505617977528
+  }
+}

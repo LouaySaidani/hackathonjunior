@@ -1,0 +1,228 @@
+{
+  "model": "logistic_regression",
+  "threshold": 0.1399,
+  "test_videos": 13,
+  "test_gaps": 276,
+  "test_positive_rate": 0.6123188405797102,
+  "model_metrics": {
+    "precision": 0.6197718631178707,
+    "recall": 0.9644970414201184,
+    "f1": 0.7546296296296295,
+    "selected_share": 0.9528985507246377,
+    "average_precision": 0.7373098811717391,
+    "roc_auc": 0.6400486644915114
+  },
+  "baseline_all_gaps": {
+    "precision": 0.6123188405797102,
+    "recall": 1.0,
+    "f1": 0.7595505617977528,
+    "selected_share": 1.0
+  },
+  "baseline_duration_rule": {
+    "precision": 0.6504065040650406,
+    "recall": 0.9467455621301775,
+    "f1": 0.7710843373493976,
+    "selected_share": 0.8913043478260869,
+    "min_duration": 3.0
+  },
+  "bootstrap": {
+    "average_precision_95ci": [
+      0.6744079560745002,
+      0.81261821645186
+    ],
+    "f1_95ci": [
+      0.702993402755775,
+      0.8018873553384068
+    ]
+  },
+  "human_descriptions": {
+    "total": 213,
+    "in_any_gap": 195,
+    "in_selected_gap": 190
+  },
+  "feature_importance": {
+    "log_duration": 0.06928106357100794,
+    "audio_rms_rel": 0.05026111676568744,
+    "duration_rank": 0.03352948752194134,
+    "is_first": 0.01961511580771032,
+    "brightness_change": 0.01561973042605164,
+    "audio_rms_db": 0.008589257679811025,
+    "visual_novelty": 0.0073561904509548805,
+    "is_last": 0.006822612540188336,
+    "cuts_per_sec": 0.006621913098986587,
+    "cuts_prev_10s": 0.005311323900956196,
+    "next_gap_duration": 0.0044959576819194455,
+    "rel_position": 0.004225967864305987,
+    "cuts_in_gap": 0.003815011303430671,
+    "audio_centroid": 0.001563208583901569,
+    "brightness": 0.0014233655271863154,
+    "speech_density_30s": 0.001340351631125003,
+    "speech_after": 0.00048173870865884835,
+    "cut_near_start": -9.879755215308113e-05,
+    "motion_mean": -0.0005486246345128916,
+    "duration": -0.0026321788330164447,
+    "motion_max": -0.0045062100582343645,
+    "prev_gap_duration": -0.004893888989458551,
+    "audio_active_frac": -0.005639430442298976,
+    "speech_before": -0.008970460524162015
+  },
+  "per_video": [
+    {
+      "video_id": "aB_s9lw9E-M",
+      "title": "Harry Confronts Snape - Harry Potter and the Deathly Hallows Part 2 [HD]",
+      "gaps": 24,
+      "human_gaps": 9,
+      "selected": 20,
+      "precision": 0.4,
+      "recall": 0.8888888888888888,
+      "f1": 0.5517241379310346,
+      "selected_share": 0.8333333333333334
+    },
+    {
+      "video_id": "fDDw7W2RQYo",
+      "title": "Planet of Snail - Official Trailer | HD",
+      "gaps": 15,
+      "human_gaps": 13,
+      "selected": 13,
+      "precision": 0.8461538461538461,
+      "recall": 0.8461538461538461,
+      "f1": 0.8461538461538461,
+      "selected_share": 0.8666666666666667
+    },
+    {
+      "video_id": "jcHt29II6UA",
+      "title": "Ratatouille: Linguini \"learns\" to Cook",
+      "gaps": 15,
+      "human_gaps": 7,
+      "selected": 15,
+      "precision": 0.4666666666666667,
+      "recall": 1.0,
+      "f1": 0.6363636363636364,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "yKGeJXk2qWQ",
+      "title": "BUTTER LOVER",
+      "gaps": 23,
+      "human_gaps": 12,
+      "selected": 23,
+      "precision": 0.5217391304347826,
+      "recall": 1.0,
+      "f1": 0.6857142857142856,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "uqxzi_ghjgc",
+      "title": "CGI 3D Animated Short HD: \"The Right Way\" - by Elena Zobak Alekperov & Flavia Groba Bandeira",
+      "gaps": 13,
+      "human_gaps": 8,
+      "selected": 13,
+      "precision": 0.6153846153846154,
+      "recall": 1.0,
+      "f1": 0.761904761904762,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "2REkk9SCRn0",
+      "title": "In a Heartbeat - Animated Short Film",
+      "gaps": 30,
+      "human_gaps": 20,
+      "selected": 28,
+      "precision": 0.6785714285714286,
+      "recall": 0.95,
+      "f1": 0.7916666666666667,
+      "selected_share": 0.9333333333333333
+    },
+    {
+      "video_id": "2mTLO2F_ERY",
+      "title": "Mr. W",
+      "gaps": 17,
+      "human_gaps": 10,
+      "selected": 17,
+      "precision": 0.5882352941176471,
+      "recall": 1.0,
+      "f1": 0.7407407407407407,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "ZG4coPHkTmQ",
+      "title": "",
+      "gaps": 14,
+      "human_gaps": 9,
+      "selected": 14,
+      "precision": 0.6428571428571429,
+      "recall": 1.0,
+      "f1": 0.782608695652174,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "1WRLqzGkzNw",
+      "title": "Double Indemnity (8/9) Movie CLIP - Goodbye, Baby (1944) HD",
+      "gaps": 19,
+      "human_gaps": 11,
+      "selected": 17,
+      "precision": 0.6470588235294118,
+      "recall": 1.0,
+      "f1": 0.7857142857142858,
+      "selected_share": 0.8947368421052632
+    },
+    {
+      "video_id": "qZsnaOQwOlI",
+      "title": "Best Horror Scenes: Wait Until Dark (1967)",
+      "gaps": 26,
+      "human_gaps": 17,
+      "selected": 24,
+      "precision": 0.6666666666666666,
+      "recall": 0.9411764705882353,
+      "f1": 0.7804878048780487,
+      "selected_share": 0.9230769230769231
+    },
+    {
+      "video_id": "egkrxkiUnoo",
+      "title": "Forrest Gump (1/10) Best Movie Quote - Life is Like a Box of Chocolates (1994)",
+      "gaps": 17,
+      "human_gaps": 12,
+      "selected": 17,
+      "precision": 0.7058823529411765,
+      "recall": 1.0,
+      "f1": 0.8275862068965517,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "rCZ3SN65kIs",
+      "title": "The Lord of the Rings - Best Scene (HD)",
+      "gaps": 35,
+      "human_gaps": 18,
+      "selected": 35,
+      "precision": 0.5142857142857142,
+      "recall": 1.0,
+      "f1": 0.6792452830188679,
+      "selected_share": 1.0
+    },
+    {
+      "video_id": "KFR9aAloEiY",
+      "title": "The Hunger Games: Catching Fire Movie CLIP #7 - The Games Begin (2013) Movie HD",
+      "gaps": 28,
+      "human_gaps": 23,
+      "selected": 27,
+      "precision": 0.8148148148148148,
+      "recall": 0.9565217391304348,
+      "f1": 0.8800000000000001,
+      "selected_share": 0.9642857142857143
+    }
+  ],
+  "cv_train": {
+    "logistic_regression": {
+      "average_precision": 0.7935688039051554,
+      "roc_auc": 0.6677489177489178
+    },
+    "random_forest": {
+      "average_precision": 0.7019897177997699,
+      "roc_auc": 0.5542671614100185
+    },
+    "gradient_boosting": {
+      "average_precision": 0.7089077397285419,
+      "roc_auc": 0.5872500515357658
+    }
+  }
+}

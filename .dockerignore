@@ -12,3 +12,5 @@ models
 notebooks
 docs
 *.log
+ml/data
+ml/reports

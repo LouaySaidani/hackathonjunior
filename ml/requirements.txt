@@ -1,0 +1,4 @@
+# ML process (training + evaluation). The app itself only needs backend/requirements.txt.
+-r ../backend/requirements.txt
+matplotlib>=3.8
+yt-dlp>=2025.1
