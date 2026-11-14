@@ -1,5 +1,7 @@
 # Wasf <span lang="ar">وصف</span> — copilote d'audiodescription assisté par IA
 
+<p align="center"><img src="docs/assets/banner.svg" width="100%" alt="Wasf (وصف) : l'audiodescription assistée par IA, validée par l'humain. Une ligne d'audiodescription placée dans un silence entre deux dialogues."></p>
+
 **Des brouillons d'audiodescription générés dans les silences des films tunisiens et francophones, relus et validés ligne par ligne par un·e audiodescripteur·rice humain·e.**
 
 [![CI](https://github.com/LouaySaidani/hackathonjunior/actions/workflows/ci.yml/badge.svg)](https://github.com/LouaySaidani/hackathonjunior/actions/workflows/ci.yml)
@@ -27,10 +29,12 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 
 **Aucune ligne n'est validée automatiquement.** Chaque ligne issue de l'IA reste étiquetée comme telle jusqu'à sa validation par une personne nommée.
 
+<p align="center"><img src="docs/assets/timeline.svg" width="100%" alt="Frise : chaque silence entre les dialogues reçoit une ligne d'audiodescription qui respecte un budget de mots, avec son état : validée, modifiée ou brouillon IA."></p>
+
 <table>
 <tr>
-<td width="50%" valign="top"><img src="docs/img/analysis.png" alt="Espace d'analyse : vidéo, frise dialogues/silences/audiodescription, étapes de l'analyse, transcription Whisper, images clés et score de pertinence ML de chaque créneau"></td>
-<td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 4/17, cartes de description avec les états Validé par un humain et Modifié par un humain, voix générée"></td>
+<td width="50%" valign="top"><img src="docs/img/analysis.png" alt="Espace d'analyse : vidéo, étapes de l'analyse, modèles utilisés, frise dialogues et silences, transcription Whisper horodatée"></td>
+<td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 13/17, bouton Tout valider, frise colorée selon l'état des lignes, carte validée par un humain avec sa voix générée"></td>
 </tr>
 <tr>
 <td><b>Analyse</b> : Whisper transcrit les dialogues, Wasf trouve les silences et les découpe en créneaux, le modèle ML donne à chaque créneau un score de pertinence, puis Gemini rédige à partir des images clés.</td>
@@ -38,7 +42,7 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 </tr>
 </table>
 
-<sub>Captures réelles sur un extrait de <i>Tears of Steel</i> (© Blender Foundation, CC-BY 3.0, mango.blender.org) : 17 brouillons rédigés par <code>gemini-3.5-flash-lite</code> en 2 requêtes, 4 lignes validées et vocalisées.</sub>
+<sub>Captures réelles sur la vidéo d'exemple (extrait de film protégé, usage limité à ce dépôt privé : voir <code>samples/LICENSE.md</code>) : 17 brouillons rédigés par <code>gemini-3.6-flash</code> en 2 requêtes, relus dans l'éditeur ; 13 lignes validées et vocalisées avec <code>fr-FR-DeniseNeural</code>.</sub>
 
 <details>
 <summary>Autres écrans : tableau de bord, export</summary>
@@ -95,6 +99,8 @@ bash scripts/get_test_videos.sh     # 4 extraits de films libres de la Blender F
 Licence CC-BY : vous pouvez les montrer en public en citant l'œuvre et la Blender Foundation (crédits dans `videos_test/CREDITS.md`). Pour comparer avec de **vraies audiodescriptions humaines**, utilisez les 13 vidéos de test QuerYD téléchargées par `python ml/run_all.py` (voir [ml/README.md](ml/README.md)).
 
 ## Architecture
+
+<p align="center"><img src="docs/assets/pipeline.svg" width="100%" alt="Pipeline : vidéo, audio, transcription, silences, images clés, contexte par créneau, brouillon Gemini, validation humaine, voix, mixage, export"></p>
 
 ```mermaid
 flowchart LR

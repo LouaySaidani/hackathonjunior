@@ -1,5 +1,5 @@
 import { fmtTime, type Description, type Gap, type Interval } from "../lib/api";
-import { useT } from "../lib/i18n";
+import { useT, type Key } from "../lib/i18n";
 
 interface Props {
   duration: number;
@@ -18,6 +18,7 @@ const DESC_COLOR: Record<string, string> = {
   validated: "bg-valid",
   rejected: "bg-reject/40",
 };
+const STATE_ORDER = ["ai_draft", "edited", "validated", "rejected"] as const;
 
 /** Visual timeline. All information is also available as text lists elsewhere on the page. */
 export default function Timeline({ duration, speech, gaps, descriptions = [], current, activeId, onSeek, onSelect }: Props) {
@@ -42,8 +43,14 @@ export default function Timeline({ duration, speech, gaps, descriptions = [], cu
           </span>
         )}
         {descriptions.length > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-4 rounded-sm bg-ai" aria-hidden="true" /> {t("adLegend")}
+          // audio description lines are coloured by state: list exactly the states shown on this timeline
+          <span className="inline-flex flex-wrap items-center gap-3">
+            <span>{t("adLegend")} :</span>
+            {STATE_ORDER.filter((st) => descriptions.some((d) => d.status === st)).map((st) => (
+              <span key={st} className="inline-flex items-center gap-1.5">
+                <span className={`h-2.5 w-4 rounded-sm ${DESC_COLOR[st]}`} aria-hidden="true" /> {t(`legend_${st}` as Key)}
+              </span>
+            ))}
           </span>
         )}
       </figcaption>
