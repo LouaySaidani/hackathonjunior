@@ -30,7 +30,7 @@ from ..models import (
 from ..pipeline import gapscore, media
 from ..pipeline.fit import estimate_seconds
 from ..pipeline.vad import overlaps
-from ..providers.vision import get_vision
+from ..providers.vision import QuotaExceeded, get_vision
 
 router = APIRouter(prefix="/api")
 LANGS = {"fr", "ar", "aeb", "en"}
@@ -458,6 +458,8 @@ def regenerate_description(did: str, body: RegenBody, s: Session = Depends(get_s
         raise HTTPException(422, "Langue inconnue")
     try:
         d = service.regenerate(did, body.hint, body.language)
+    except QuotaExceeded as exc:
+        raise HTTPException(429, str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(502, f"Échec de la régénération : {exc}") from exc
     return desc_out(d)
@@ -475,6 +477,8 @@ def draft_gap(gid: int, s: Session = Depends(get_session)):
         d = service.draft_gap(gid)
     except FileExistsError as exc:
         raise HTTPException(409, str(exc)) from exc
+    except QuotaExceeded as exc:
+        raise HTTPException(429, str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(502, f"Échec de la rédaction : {exc}") from exc
     return desc_out(d)

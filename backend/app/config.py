@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     vlm_provider: str = "auto"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.6-flash"
+    # tried in order when the previous model's daily quota is exhausted (free tier: ~20 requests/day/model)
+    gemini_fallback_models: str = "gemini-3.5-flash-lite,gemini-flash-lite-latest"
+    vlm_batch_size: int = 8  # silent slots described per request (saves quota)
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"

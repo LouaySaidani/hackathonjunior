@@ -52,7 +52,7 @@ class Draft:
     uncertain: list[str] = field(default_factory=list)
 
 
-SYSTEM_PROMPT = """You are an assistant to a professional audio describer (audiodescripteur) working on \
+_ROLE = """You are an assistant to a professional audio describer (audiodescripteur) working on \
 Tunisian and Francophone films for blind and visually impaired audiences. You write a DRAFT that a \
 human will edit and validate.
 
@@ -64,11 +64,32 @@ contains a matching visual description; otherwise use a neutral description ("un
 3. Do not repeat or paraphrase the dialogue; add only visual information the dialogue does not give.
 4. Present tense, concise, natural, culturally sensitive and respectful (Tunisian/Arab context: use correct \
 local terms, e.g. chéchia, sefsari, médina, when clearly visible).
+"""
+
+SYSTEM_PROMPT = _ROLE.replace("{", "{{").replace("}", "}}") + """\
 5. Maximum {max_words} words - it must fit in a {duration:.1f}-second silence.
 6. Write in {language}.
 7. If you are unsure about something, lower the confidence and list it in "uncertain".
 
 Answer ONLY with JSON: {{"text": "...", "confidence": 0.0-1.0, "uncertain": ["..."]}}"""
+
+BATCH_SYSTEM_PROMPT = _ROLE.replace("{", "{{").replace("}", "}}") + """\
+5. You receive {n} separate silent slots of the same film, in chronological order, each followed by its \
+own frames. Write ONE description per slot, using only that slot's frames. Respect each slot's word limit \
+(it must fit in the silence). Do not repeat what an earlier slot already described.
+6. Write in {language}.
+7. If you are unsure about something, lower the confidence and list it in "uncertain".
+
+Answer ONLY with JSON, exactly one item per slot:
+{{"items": [{{"slot": 1, "text": "...", "confidence": 0.0-1.0, "uncertain": ["..."]}}]}}"""
+
+
+class QuotaExceeded(RuntimeError):
+    """The provider refuses for quota reasons (e.g. Gemini free tier: 20 requests/day/model)."""
+
+    def __init__(self, message: str, retry_after: float = 0.0):
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 def build_user_prompt(req: DraftRequest) -> str:
@@ -104,6 +125,27 @@ def parse_json_answer(raw: str) -> tuple[str, float, list[str]]:
     return str(data.get("text", "")).strip(), max(0.0, min(1.0, conf)), [str(u) for u in data.get("uncertain", [])]
 
 
+def parse_batch_answer(raw: str, n: int) -> list[tuple[str, float, list[str]] | None]:
+    """{"items": [{"slot": k, ...}]} -> one (text, confidence, uncertain) per slot, None if missing."""
+    out: list[tuple[str, float, list[str]] | None] = [None] * n
+    match = re.search(r"[\[{].*[\]}]", raw, flags=re.S)
+    try:
+        data = json.loads(match.group(0)) if match else None
+    except json.JSONDecodeError:
+        data = None
+    items = data.get("items", []) if isinstance(data, dict) else data if isinstance(data, list) else []
+    for pos, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+        try:
+            k = int(item.get("slot", pos + 1)) - 1
+        except (TypeError, ValueError):
+            k = pos
+        if 0 <= k < n and out[k] is None and str(item.get("text", "")).strip():
+            out[k] = parse_json_answer(json.dumps(item))
+    return out
+
+
 def _b64(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode()
 
@@ -115,13 +157,51 @@ class VisionProvider:
     def draft(self, req: DraftRequest) -> Draft:
         raise NotImplementedError
 
+    def draft_many(self, reqs: list[DraftRequest], on_progress=None) -> list[Draft | Exception]:  # noqa: ANN001
+        """One result per request: a Draft, or the exception that prevented it (never raises)."""
+        out: list[Draft | Exception] = []
+        for i, req in enumerate(reqs):
+            try:
+                out.append(self.draft(req))
+            except QuotaExceeded as exc:  # no point in trying the next ones
+                out += [exc] * (len(reqs) - i)
+                break
+            except Exception as exc:  # noqa: BLE001
+                out.append(exc)
+            if on_progress:
+                on_progress(i + 1, len(reqs))
+        return out
+
+
+# Models whose quota is exhausted (or that are unavailable), shared by every provider instance of the
+# process: {model: unix time until which it is skipped}. Avoids re-hitting a model Google already refused.
+_EXHAUSTED: dict[str, float] = {}
+
+
+def _retry_delay(resp: httpx.Response) -> float:
+    """Seconds Google asks us to wait (RetryInfo.retryDelay, e.g. "47917s"), 0 if absent."""
+    try:
+        for d in resp.json().get("error", {}).get("details", []):
+            if str(d.get("@type", "")).endswith("RetryInfo"):
+                return float(str(d.get("retryDelay", "0s")).rstrip("s") or 0)
+    except (ValueError, AttributeError):
+        pass
+    return 0.0
+
 
 class GeminiVision(VisionProvider):
+    """Gemini, with batching (several slots per request) and automatic fallback to other models when the
+    daily quota of one model is exhausted - the free tier allows only ~20 requests per day per model."""
+
     name = "gemini"
+    MAX_WAIT = 60.0  # wait at most this long on a 429 before switching model
 
     def __init__(self, settings: Settings, client: httpx.Client | None = None):
         self.key = settings.gemini_api_key
-        self.model = settings.gemini_model
+        fallbacks = [m.strip() for m in settings.gemini_fallback_models.split(",") if m.strip()]
+        self.models = list(dict.fromkeys([settings.gemini_model, *fallbacks]))
+        self.model = self.models[0]
+        self.batch_size = max(1, settings.vlm_batch_size)
         self.client = client or httpx.Client(timeout=180)
         self.retries = 3
         self.backoff = 4.0
@@ -131,29 +211,106 @@ class GeminiVision(VisionProvider):
                                       language=LANG_NAMES.get(req.language, req.language))
         parts: list[dict] = [{"text": build_user_prompt(req)}]
         parts += [{"inline_data": {"mime_type": "image/jpeg", "data": _b64(f)}} for f in req.frames]
+        raw, model = self._generate(system, parts)
+        text, conf, unc = parse_json_answer(raw)
+        return Draft(text, conf, self.name, model, unc)
+
+    def draft_many(self, reqs: list[DraftRequest], on_progress=None) -> list[Draft | Exception]:  # noqa: ANN001
+        """Several slots per request: a 2-minute film costs ~2 requests instead of ~15."""
+        out: list[Draft | Exception | None] = [None] * len(reqs)
+        order = sorted(range(len(reqs)), key=lambda i: (reqs[i].language, reqs[i].start))
+        chunks = [order[i: i + self.batch_size] for i in range(0, len(order), self.batch_size)]
+        done = 0
+        for ci, idx in enumerate(chunks):
+            group = [reqs[i] for i in idx]
+            try:
+                results = [self.draft(group[0])] if len(group) == 1 else self._draft_batch(group)
+            except QuotaExceeded as exc:
+                for rest in chunks[ci:]:
+                    for i in rest:
+                        out[i] = exc
+                break
+            except Exception as exc:  # noqa: BLE001 - keep going with the next chunk
+                results = [exc] * len(group)
+            for i, r in zip(idx, results, strict=True):
+                out[i] = r if r is not None else ValueError("réponse incomplète du modèle pour ce créneau")
+            done += len(idx)
+            if on_progress:
+                on_progress(done, len(reqs))
+        return [r if r is not None else ValueError("non traité") for r in out]
+
+    def _draft_batch(self, group: list[DraftRequest]) -> list[Draft | None]:
+        lang = LANG_NAMES.get(group[0].language, group[0].language)
+        system = BATCH_SYSTEM_PROMPT.format(n=len(group), language=lang)
+        r0 = group[0]
+        cast = "\n".join(f"- {c.get('name', '?')}: {c.get('description', '')}" for c in r0.cast) or "(none provided)"
+        parts: list[dict] = [{"text": f"Film: {r0.film_title or 'untitled'}\n"
+                                      f"Cast list supplied by the user (the ONLY allowed names):\n{cast}"}]
+        for k, req in enumerate(group, 1):
+            parts.append({"text": "\n".join([
+                f"--- Slot {k} ---",
+                f"Silence window: {req.start:.2f}s -> {req.end:.2f}s ({req.end - req.start:.1f}s). "
+                f"Maximum {req.max_words} words.",
+                f"Frames attached at times: {', '.join(f'{t:.2f}s' for t in req.frame_times) or '-'}.",
+                f"Scene change inside the window: {'yes' if req.scene_change else 'no'}.",
+                f"Dialogue just before: “{req.dialogue_before or '-'}”",
+                f"Dialogue just after: “{req.dialogue_after or '-'}”",
+            ])})
+            parts += [{"inline_data": {"mime_type": "image/jpeg", "data": _b64(f)}} for f in req.frames]
+        raw, model = self._generate(system, parts)
+        return [Draft(*p[:2], self.name, model, p[2]) if p else None for p in parse_batch_answer(raw, len(group))]
+
+    def _generate(self, system: str, parts: list[dict]) -> tuple[str, str]:
+        """Call the first model that still has quota. Returns (raw text, model used)."""
         body = {
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"},
         }
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
-        data = self._post(url, body)
-        raw = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
-        text, conf, unc = parse_json_answer(raw)
-        return Draft(text, conf, self.name, self.model, unc)
+        last: QuotaExceeded | None = None
+        for model in self.models:
+            if _EXHAUSTED.get(model, 0) > time.time():
+                continue
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            try:
+                data = self._post(url, body)
+            except QuotaExceeded as exc:
+                _EXHAUSTED[model] = time.time() + max(exc.retry_after, 300)
+                last = exc
+                continue
+            self.model = model
+            raw = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+            return raw, model
+        hours = (min(_EXHAUSTED.values(), default=time.time()) - time.time()) / 3600
+        raise QuotaExceeded(
+            f"Quota Gemini épuisé pour tous les modèles ({', '.join(self.models)}). La version gratuite autorise "
+            f"environ 20 requêtes par jour et par modèle ; réessayez dans {max(hours, 0.1):.0f} h environ, "
+            "ou utilisez une autre clé.", last.retry_after if last else 0.0)
 
     def _post(self, url: str, body: dict) -> dict:
-        """POST with retries on transient failures (429 / 5xx / timeouts): Gemini returns 503 under high demand."""
+        """POST with retries on transient failures (5xx, timeouts, short 429). A 429 with a long retry delay
+        (daily quota) or a 404 (model withdrawn) raises QuotaExceeded so the caller switches model."""
         for attempt in range(self.retries + 1):
             try:
                 resp = self.client.post(url, json=body, headers={"x-goog-api-key": self.key})
-                if resp.status_code not in (429, 500, 502, 503, 504) or attempt == self.retries:
-                    resp.raise_for_status()
-                    return resp.json()
             except httpx.TransportError:
                 if attempt == self.retries:
                     raise
-            time.sleep(self.backoff * (2 ** attempt))
+                time.sleep(self.backoff * (2 ** attempt))
+                continue
+            if resp.status_code == 404:
+                raise QuotaExceeded("modèle indisponible", retry_after=86400)
+            if resp.status_code == 429:
+                delay = _retry_delay(resp)
+                if delay > self.MAX_WAIT or attempt == self.retries:
+                    raise QuotaExceeded("quota épuisé", retry_after=delay)
+                time.sleep(delay or self.backoff * (2 ** attempt))
+                continue
+            if resp.status_code in (500, 502, 503, 504) and attempt < self.retries:
+                time.sleep(self.backoff * (2 ** attempt))
+                continue
+            resp.raise_for_status()
+            return resp.json()
         raise RuntimeError("unreachable")
 
 

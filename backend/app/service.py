@@ -31,7 +31,7 @@ from .pipeline.gapscore import select as select_gaps
 from .pipeline.vad import combine_speech, compute_gaps, detect_speech, overlaps, split_long_gaps
 from .providers import asr as asr_mod
 from .providers import tts as tts_mod
-from .providers.vision import DraftRequest, get_vision
+from .providers.vision import Draft, DraftRequest, QuotaExceeded, get_vision
 
 log = logging.getLogger("service")
 
@@ -178,14 +178,15 @@ def analyze(project_id: str, ctx: JobContext) -> dict:
 
         # 6. drafts
         ctx.update(0.8, "drafts", "Rédaction des brouillons d'audiodescription (IA)…")
-        n = draft_all(project_id, ctx)
+        n, draft_notes = draft_all(project_id, ctx)
         with session_scope() as s:
             p = s.get(Project, project_id)
             p.status = "ready"
             p.updated_at = utcnow()
             s.add(p)
             s.commit()
-        return {"gaps": len(gaps), "segments": len(result.segments), "drafts": n, "notes": result.notes,
+        return {"gaps": len(gaps), "segments": len(result.segments), "drafts": n,
+                "notes": [*result.notes, *draft_notes],
                 "scene_changes": len(cuts), "vad": vad_engine, "gap_selection": selection,
                 "gaps_recommended": sum(recommended)}
     except Exception as exc:
@@ -243,59 +244,87 @@ def _context(s: Session, project: Project, start: float, end: float, exclude_id:
     return {"before": " ".join(before), "after": " ".join(after), "prev": prev.text if prev else ""}
 
 
-def make_draft(s: Session, project: Project, gap_start: float, gap_end: float, gap_id: int | None,
-               language: str, hint: str = "", exclude_id: str | None = None) -> dict:
-    settings = get_settings()
-    provider = get_vision(settings)
+def build_request(s: Session, project: Project, gap_start: float, gap_end: float, language: str,
+                  hint: str = "", exclude_id: str | None = None) -> DraftRequest:
     frames = s.exec(select(Keyframe).where(Keyframe.project_id == project.id, Keyframe.time >= gap_start - 0.01,
                                            Keyframe.time <= gap_end + 0.01).order_by(Keyframe.time)).all()  # type: ignore[arg-type]
     ctxd = _context(s, project, gap_start, gap_end, exclude_id)
-    duration = gap_end - gap_start
-    req = DraftRequest(
-        start=gap_start, end=gap_end, language=language, max_words=max_words(duration, language),
+    return DraftRequest(
+        start=gap_start, end=gap_end, language=language, max_words=max_words(gap_end - gap_start, language),
         frames=[absolute(f.path) for f in frames], frame_times=[f.time for f in frames],
         dialogue_before=ctxd["before"], dialogue_after=ctxd["after"], previous_description=ctxd["prev"],
         cast=json.loads(project.cast_json or "[]"), scene_change=any(f.reason == "scene_change" for f in frames),
         film_title=project.title, is_sample=project.is_sample, hint=hint,
     )
-    draft = provider.draft(req)
-    text, flags = fit_to_gap(draft.text or "", duration, language)
+
+
+def finalize_draft(draft: Draft, req: DraftRequest, settings: Settings) -> dict:
+    """Fit the model's text to the silence and compute flags and timing."""
+    text, flags = fit_to_gap(draft.text or "", req.end - req.start, req.language)
     if draft.confidence < settings.confidence_threshold:
         flags.append("low_confidence")
     if draft.uncertain:
         flags.append("uncertain")
-    if provider.name == "demo":
+    if draft.provider == "demo":
         flags.append("demo")
-    est = estimate_seconds(text, language)
-    end = round(min(gap_end, gap_start + max(est + 0.4, 1.2)), 3)
+    est = estimate_seconds(text, req.language)
+    end = round(min(req.end, req.start + max(est + 0.4, 1.2)), 3)
     return {"text": text, "flags": sorted(set(flags)), "confidence": round(draft.confidence, 2),
-            "provider": draft.provider, "model": draft.model, "start": gap_start, "end": end,
+            "provider": draft.provider, "model": draft.model, "start": req.start, "end": end,
             "uncertain": draft.uncertain}
 
 
-def draft_all(project_id: str, ctx: JobContext | None = None) -> int:
+def make_draft(s: Session, project: Project, gap_start: float, gap_end: float, gap_id: int | None,
+               language: str, hint: str = "", exclude_id: str | None = None) -> dict:
     settings = get_settings()
+    req = build_request(s, project, gap_start, gap_end, language, hint, exclude_id)
+    return finalize_draft(get_vision(settings).draft(req), req, settings)
+
+
+def draft_all(project_id: str, ctx: JobContext | None = None) -> tuple[int, list[str]]:
+    """Draft every selected slot, several slots per model request. Never fails the analysis: slots the
+    model could not draft (quota, network...) are reported in the notes and can be drafted later."""
+    settings = get_settings()
+    provider = get_vision(settings)
     with session_scope() as s:
         p = s.get(Project, project_id)
         gaps = s.exec(select(Gap).where(Gap.project_id == project_id, Gap.recommended == True)  # noqa: E712
                       .order_by(Gap.start)).all()  # type: ignore[arg-type]
-        p.vlm_provider = get_vision(settings).name
-        p.vlm_model = get_vision(settings).model
-        p.demo_mode = p.vlm_provider == "demo"
-        n = 0
-        for i, g in enumerate(gaps):
+        reqs = [build_request(s, p, g.start, g.end, p.language) for g in gaps]
+
+        def progress(done: int, total: int) -> None:
             if ctx:
-                ctx.update(0.8 + 0.2 * i / max(1, len(gaps)), "drafts", f"Brouillon {i + 1}/{len(gaps)}…")
-            _new_ai_description(s, p, g, settings)
-            s.commit()  # commit each draft so the UI can stream them
+                ctx.update(0.8 + 0.2 * done / max(1, total), "drafts", f"Brouillons {done}/{total}…")
+
+        results = provider.draft_many(reqs, on_progress=progress)
+        n, failed, quota = 0, [], None
+        for g, req, res in zip(gaps, reqs, results, strict=True):
+            if isinstance(res, Exception):
+                failed.append(res)
+                quota = res if isinstance(res, QuotaExceeded) else quota
+                continue
+            _store_description(s, p, g, finalize_draft(res, req, settings), settings)
             n += 1
+        p.vlm_provider, p.vlm_model = provider.name, provider.model
+        p.demo_mode = p.vlm_provider == "demo"
         s.add(p)
         s.commit()
-    return n
+
+    notes = []
+    if quota:
+        notes.append(f"{len(failed)} créneau(x) sur {len(gaps)} sans brouillon : {quota} "
+                     "Utilisez « Rédiger ici » plus tard, ou écrivez ces descriptions à la main.")
+    elif failed:
+        notes.append(f"{len(failed)} créneau(x) sur {len(gaps)} sans brouillon (erreur du modèle : "
+                     f"{str(failed[0])[:160]}). Utilisez « Rédiger ici » pour réessayer.")
+    return n, notes
 
 
 def _new_ai_description(s: Session, p: Project, g: Gap, settings: Settings) -> Description:
-    d = make_draft(s, p, g.start, g.end, g.id, p.language)
+    return _store_description(s, p, g, make_draft(s, p, g.start, g.end, g.id, p.language), settings)
+
+
+def _store_description(s: Session, p: Project, g: Gap, d: dict, settings: Settings) -> Description:
     desc = Description(project_id=p.id, gap_id=g.id, start=d["start"], end=d["end"], text=d["text"],
                        language=p.language, origin="ai", status=DescriptionStatus.AI_DRAFT,
                        confidence=d["confidence"], flags_json=json.dumps(d["flags"]),

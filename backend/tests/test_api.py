@@ -124,3 +124,27 @@ def test_feedback(client):
     client.post("/api/feedback", json={"comprehension": 2, "preferred_language": "msa", "consent": True})
     s = client.get("/api/feedback/summary").json()
     assert s["count"] == 2 and s["mean_comprehension"] == 3.0 and s["language_preference"]["darija"] == 1
+
+
+def test_analysis_survives_exhausted_quota(client, monkeypatch):
+    """A quota error on some slots must not throw away the analysis or the drafts already written."""
+    from app import service
+    from app.providers.vision import DemoVision, QuotaExceeded
+
+    class HalfQuota(DemoVision):
+        name, model = "gemini", "gemini-test"
+
+        def draft_many(self, reqs, on_progress=None):
+            half = len(reqs) // 2
+            exc = QuotaExceeded("Quota Gemini épuisé pour tous les modèles.")
+            return [self.draft(r) for r in reqs[:half]] + [exc] * (len(reqs) - half)
+
+    monkeypatch.setattr(service, "get_vision", lambda settings: HalfQuota(settings))
+    pid = client.post("/api/projects/sample").json()["id"]
+    job = _wait(client, client.post(f"/api/projects/{pid}/analyze").json()["id"])
+    assert job["status"] == "done", job["error"]
+    assert any("sans brouillon" in n and "Rédiger ici" in n for n in job["result"]["notes"])
+    proj = client.get(f"/api/projects/{pid}").json()
+    assert proj["status"] == "ready"
+    n_gaps = len(proj["gaps"])
+    assert len(proj["descriptions"]) == n_gaps // 2 == job["result"]["drafts"]
