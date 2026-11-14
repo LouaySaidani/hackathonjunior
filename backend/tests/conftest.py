@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+# Synthetic CC0 clip with a reference transcript and script: tests assert exact values on it.
+FIXTURE_SAMPLE = Path(__file__).resolve().parent / "fixtures" / "sample_medina.mp4"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -21,6 +23,7 @@ def _env(tmp_path_factory):
         GEMINI_API_KEY="",
         OPENAI_API_KEY="",
         GAP_SELECTION="all",  # deterministic: a trained model in ml/artifacts must not change these tests
+        SAMPLE_VIDEO=str(FIXTURE_SAMPLE),  # the app's own sample video (samples/) is for people, not tests
     )
     from app.config import get_settings
     from app.db import reset_engine
@@ -43,7 +46,7 @@ def client(_env):
 
 @pytest.fixture(scope="session")
 def sample_video() -> Path:
-    return ROOT / "samples" / "sample_medina.mp4"
+    return FIXTURE_SAMPLE
 
 
 @pytest.fixture()

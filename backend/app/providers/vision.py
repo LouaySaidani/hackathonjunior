@@ -372,7 +372,7 @@ def _frame_stats(frame: Path) -> tuple[int, float, float]:
 
 
 class DemoVision(VisionProvider):
-    """DEMO MODE. For the bundled sample clip it returns a curated reference script; for any other
+    """DEMO MODE. For a sample video shipped with a reference script it returns that script; for any other
     video it returns a deliberately generic, low-confidence line built from real pixel statistics.
     Output is always flagged `demo` - it is never presented as real AI analysis."""
 
@@ -380,7 +380,7 @@ class DemoVision(VisionProvider):
     model = "demo-mock"
 
     def __init__(self, settings: Settings):
-        path = settings.samples_dir / "sample_script.json"
+        path = settings.sample_script
         self.script = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
 
     def draft(self, req: DraftRequest) -> Draft:

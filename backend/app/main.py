@@ -31,6 +31,13 @@ def _startup() -> None:
         for p in s.exec(select(Project).where(Project.status == "analyzing")).all():
             p.status, p.error = "error", "Analyse interrompue par un redémarrage"
             s.add(p)
+        # A sample made from a previous SAMPLE_VIDEO stays as an ordinary project (nothing is deleted),
+        # so the current sample video can be seeded.
+        sample_name = settings.resolved_sample_video.name
+        for p in s.exec(select(Project).where(Project.is_sample == True)).all():  # noqa: E712
+            if p.filename != sample_name:
+                p.is_sample = False
+                s.add(p)
         s.commit()
         if settings.seed_sample and not s.exec(select(Project).where(Project.is_sample == True)).first():  # noqa: E712
             try:

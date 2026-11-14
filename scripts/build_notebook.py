@@ -9,7 +9,7 @@ md, code = nbf.v4.new_markdown_cell, nbf.v4.new_code_cell
 nb.cells = [
     md("""# Basira — démonstration du pipeline (DEMO MODE)
 
-Ce notebook exécute, sur le clip d'exemple **synthétique et libre de droits** (`samples/sample_medina.mp4`, CC0),
+Ce notebook exécute, sur le clip d'exemple **synthétique et libre de droits** (`backend/tests/fixtures/sample_medina.mp4`, CC0),
 les étapes clés du pipeline : extraction audio → détection de la parole (VAD) → transcription →
 calcul des silences → images clés → brouillons d'audiodescription → WebVTT.
 
@@ -24,6 +24,8 @@ sys.path.insert(0, str(ROOT / "backend"))
 os.environ.setdefault("ASR_PROVIDER", "demo")
 os.environ.setdefault("VLM_PROVIDER", "demo")
 os.environ.setdefault("DATA_DIR", tempfile.mkdtemp())
+# the synthetic test clip ships with a reference transcript and script used by the demo providers
+os.environ.setdefault("SAMPLE_VIDEO", str(ROOT / "backend" / "tests" / "fixtures" / "sample_medina.mp4"))
 
 from app.config import get_settings
 from app.pipeline import media
@@ -34,7 +36,7 @@ from app.providers import asr
 from app.providers.vision import get_vision, DraftRequest
 
 settings = get_settings()
-VIDEO = ROOT / "samples" / "sample_medina.mp4"
+VIDEO = settings.resolved_sample_video
 WORK = Path(tempfile.mkdtemp())
 meta = media.probe(VIDEO)
 meta"""),
@@ -43,7 +45,7 @@ meta"""),
 speech, engine = detect_speech(wav, settings.vad_engine)
 print(engine, [(round(a, 2), round(b, 2)) for a, b in speech])"""),
     md("## 2. Transcription"),
-    code("""res = asr.transcribe(settings, wav, "fr", ROOT / "samples" / "sample.transcript.json")
+    code("""res = asr.transcribe(settings, wav, "fr", VIDEO.with_suffix(".transcript.json"))
 print(res.provider, res.model, res.notes)
 for s in res.segments:
     print(f"{s.start:6.2f}–{s.end:6.2f}  {s.text}")"""),

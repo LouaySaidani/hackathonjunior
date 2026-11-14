@@ -19,7 +19,8 @@ code** ; le fichier et le comportement correspondants sont indiqués.
 - Case de consentement **obligatoire** à l'import (refus HTTP 400 sinon).
 - **Aucun entraînement** sur les films importés. L'option d'opt-in est décochée par défaut, enregistrée, et n'est utilisée par aucun code dans ce MVP.
 - Le script d'audiodescription complet (`script_ayant_droit.json`, avec l'historique) est généré pour être **remis à l'ayant droit**.
-- Le clip d'exemple est synthétique et placé sous CC0 (`samples/LICENSE.md`). Aucun film protégé n'est téléchargé.
+- Le clip de test est synthétique et placé sous CC0 (`backend/tests/fixtures/LICENSE.md`).
+- La vidéo d'exemple (`samples/vd_test.mp4`) est un **extrait de film protégé** : elle sert uniquement au test et au jury, dans ce dépôt privé, et doit être retirée de l'historique git avant toute publication (`samples/LICENSE.md`).
 
 ## 3. Données et vie privée
 

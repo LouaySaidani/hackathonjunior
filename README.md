@@ -173,7 +173,7 @@ Détails, variables et vidéos de test : [ml/README.md](ml/README.md).
 | Angle | Notre réponse de conception |
 |---|---|
 | **Créateurs et métiers** | L'audiodescripteur·rice est l'auteur·e : validation explicite et nominative de chaque ligne, jamais automatique. Seules les lignes validées sont vocalisées et exportées. Relecteur·rice·s aveugles **rémunéré·e·s** et associé·e·s à l'évaluation (modèle ATAA). |
-| **Droits** | Case de consentement obligatoire (refus côté serveur sinon). **Aucun entraînement** sur les films importés ; opt-in désactivé par défaut. Script complet remis à l'ayant droit (`script_ayant_droit.json`). Clip d'exemple synthétique sous CC0. |
+| **Droits** | Case de consentement obligatoire (refus côté serveur sinon). **Aucun entraînement** sur les films importés ; opt-in désactivé par défaut. Script complet remis à l'ayant droit (`script_ayant_droit.json`). Clip de test synthétique sous CC0 ; la vidéo d'exemple est un extrait protégé, réservé au test dans ce dépôt privé. |
 | **Données** | **Pas de reconnaissance faciale** ; personnages nommés uniquement via la distribution fournie. Stockage local, secrets côté serveur. Seules quelques images clés sont envoyées au VLM, jamais l'audio. Jeux de données ouverts de parole tunisienne recensés pour le fine-tuning (LinTO, TunSwitch, TARIC, TEDxTN). |
 | **Cultures et langues** | Français, arabe standard et darija tunisienne (plus l'anglais). RTL correct dans l'interface, le VTT et le TTML. Termes culturels exacts uniquement s'ils sont visibles. **Le choix entre arabe standard et darija revient aux usagers aveugles**, et il est mesuré. |
 | **Transparence** | 3 états visibles (icône et texte, jamais la couleur seule). Confiance affichée, mention « À relire », historique, texte IA d'origine conservé. Mentions IA et validation dans le VTT, le TTML, les métadonnées MP4 et `credits.txt`. Bannière **DEMO MODE** propagée jusque dans les exports. |
@@ -221,7 +221,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `GAP_SELECTION` | `auto` | `auto` (modèle ML s'il est entraîné, sinon tous les silences) · `model` · `all` |
 | `GAP_SCORE_THRESHOLD` / `GAP_MODEL_PATH` | `0` (seuil appris) / `ml/artifacts/gap_scorer.joblib` | Sélection ML des silences |
 | `MAX_UPLOAD_MB`, `SEED_SAMPLE`, `DATA_DIR`, `MODELS_DIR` | `500`, `true`, `./data`, `./models` | Stockage |
-| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | — (clip CC0 fourni) | Vidéo du projet d'exemple. Mettez une vidéo locale dans `samples/local/` (ignoré par git) pour l'utiliser à la place ; seul le clip fourni a un script de référence en DEMO MODE |
+| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | `samples/vd_test.mp4` / « Exemple — extrait de film (test) » | Vidéo du projet d'exemple. Une vidéo locale peut aller dans `samples/local/` (ignoré par git). En DEMO MODE, une transcription et un script de référence sont utilisés s'ils sont fournis à côté de la vidéo (`<nom>.transcript.json`, `<nom>.script.json`) |
 
 ## Développement local
 
@@ -258,7 +258,7 @@ cd ../frontend && npm run build
 
 ## Limites honnêtes
 
-- **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour le clip d'exemple, elle renvoie un script de référence écrit à la main ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
+- **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour une vidéo fournie avec un script de référence (le clip de test synthétique), elle renvoie ce script écrit à la main ; pour toute autre vidéo, y compris la vidéo d'exemple, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
 - **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Basira décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
 - **Modèle ML** : entraîné sur 17 vidéos seulement, avec des descriptions bénévoles en anglais. Il apprend *où* décrire, pas *quoi* ni dans quelle langue, et ne bat pas encore la règle « tout décrire » (voir [les résultats](#apprentissage-automatique--où-décrire-)). Son transfert vers des films tunisiens reste à vérifier.
@@ -275,7 +275,8 @@ cd ../frontend && npm run build
 | Élément | Licence |
 |---|---|
 | Code de Basira | Apache-2.0 ([LICENSE](LICENSE)) |
-| Clip d'exemple, transcription et script de référence | CC0 1.0 ([samples/LICENSE.md](samples/LICENSE.md)) |
+| Vidéo d'exemple `samples/vd_test.mp4` | **Extrait de film protégé**, tous droits réservés : test et jury uniquement, dépôt privé, à retirer avant toute publication ([samples/LICENSE.md](samples/LICENSE.md)) |
+| Clip de test synthétique, transcription et script de référence | CC0 1.0 ([backend/tests/fixtures/LICENSE.md](backend/tests/fixtures/LICENSE.md)) |
 | faster-whisper / CTranslate2 | MIT ; poids Whisper d'OpenAI sous MIT |
 | Silero VAD | MIT |
 | scikit-learn | BSD-3-Clause |

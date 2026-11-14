@@ -41,7 +41,7 @@ class ASRProvider:
 
 
 class DemoASR(ASRProvider):
-    """Reads a known transcript shipped next to the sample clip. Never invents dialogue."""
+    """Reads the reference transcript shipped next to the sample video, if any. Never invents dialogue."""
 
     name = "demo"
 

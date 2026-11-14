@@ -4,7 +4,7 @@
 
 | Contrôle | Où | Critère |
 |---|---|---|
-| Calcul des silences | `tests/test_vad.py` | Silences ≥ seuil, marge appliquée, jamais de chevauchement avec la parole. VAD réel (Silero et webrtcvad) sur le clip d'exemple |
+| Calcul des silences | `tests/test_vad.py` | Silences ≥ seuil, marge appliquée, jamais de chevauchement avec la parole. VAD réel (Silero et webrtcvad) sur le clip de test synthétique (`backend/tests/fixtures`) |
 | Ajustement à la durée | `tests/test_fit_export.py` | Texte raccourci ou signalé `too_long` |
 | WebVTT / TTML | `tests/test_fit_export.py` | VTT valide, `-->` échappé, RTL ; TTML est du XML valide avec `tts:direction="rtl"` |
 | Fournisseurs | `tests/test_providers.py` | Demo honnête (faible confiance hors clip d'exemple) ; forme des requêtes Gemini et OpenAI-compatibles (mock HTTP) ; règle « pas de reconnaissance faciale » présente dans le prompt |

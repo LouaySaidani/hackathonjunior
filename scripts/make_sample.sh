@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Regenerates samples/sample_medina.mp4 (CC0, fully synthetic). Requires docker (for espeak-ng) and ffmpeg.
+# Regenerates backend/tests/fixtures/sample_medina.mp4, the synthetic CC0 clip used by the tests and the notebook. Requires docker (for espeak-ng) and ffmpeg.
 set -euo pipefail
-OUT="$(cd "$(dirname "$0")/.." && pwd)/samples"
+OUT="$(cd "$(dirname "$0")/.." && pwd)/backend/tests/fixtures"
 TMP="$(mktemp -d)"
 docker run --rm -v "$TMP:/out" debian:bookworm-slim bash -c "apt-get update -qq && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends espeak-ng >/dev/null && \

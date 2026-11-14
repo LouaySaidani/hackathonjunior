@@ -1,4 +1,4 @@
-"""The sample project can use a local video (SAMPLE_VIDEO); only the bundled clip keeps its reference script."""
+"""The sample project video is configurable (SAMPLE_VIDEO); reference files are used only when they exist."""
 
 import subprocess
 
@@ -30,9 +30,10 @@ def test_local_sample_video_replaces_the_bundled_clip(client, tmp_path, monkeypa
     client.delete(f"/api/projects/{p['id']}")
 
 
-def test_default_sample_is_the_bundled_clip_with_its_script(client):
+def test_sample_with_reference_files_uses_them(client):
+    """The test fixture ships <name>.transcript.json and <name>.script.json next to the video."""
     settings = get_settings()
-    assert settings.resolved_sample_video == settings.bundled_sample
+    assert settings.resolved_sample_video.name == "sample_medina.mp4"
 
     p = client.post("/api/projects/sample").json()
 
@@ -40,8 +41,24 @@ def test_default_sample_is_the_bundled_clip_with_its_script(client):
     with Session(get_engine()) as s:
         project = s.get(Project, p["id"])
         assert has_reference_script(project)
-        assert sidecar_for(project, settings) == settings.samples_dir / "sample.transcript.json"
+        assert sidecar_for(project, settings) == settings.resolved_sample_video.with_suffix(".transcript.json")
     client.delete(f"/api/projects/{p['id']}")
+
+
+def test_previous_sample_is_kept_as_an_ordinary_project(client, monkeypatch):
+    """Changing SAMPLE_VIDEO never deletes the old sample: it becomes a normal project at startup."""
+    from app.main import _startup
+
+    old = client.post("/api/projects/sample").json()
+    monkeypatch.setattr(get_settings(), "seed_sample", False)
+    monkeypatch.setattr(get_settings(), "sample_video", "samples/vd_test.mp4")
+
+    _startup()
+
+    with Session(get_engine()) as s:
+        project = s.get(Project, old["id"])
+        assert project is not None and project.is_sample is False
+    client.delete(f"/api/projects/{old['id']}")
 
 
 def test_missing_sample_video_returns_404(client, monkeypatch):

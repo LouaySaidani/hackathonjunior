@@ -10,7 +10,7 @@ from pathlib import Path
 
 from sqlmodel import Session, delete, select
 
-from .config import BUNDLED_SAMPLE_NAME, Settings, get_settings
+from .config import Settings, get_settings
 from .db import session_scope
 from .jobs import JobContext
 from .models import (
@@ -55,15 +55,20 @@ def absolute(relpath: str, settings: Settings | None = None) -> Path:
     return settings.data_dir / relpath
 
 
-def has_reference_script(project: Project) -> bool:
-    """Only the bundled sample clip has a hand-written transcript and script; any other sample video
-    (SAMPLE_VIDEO) goes through the real pipeline like an imported film."""
-    return project.is_sample and project.filename == BUNDLED_SAMPLE_NAME
+def _is_current_sample(project: Project, settings: Settings) -> bool:
+    return project.is_sample and project.filename == settings.resolved_sample_video.name
+
+
+def has_reference_script(project: Project, settings: Settings | None = None) -> bool:
+    """True when the project is the sample and a hand-written script ships with its video. Any other
+    project goes through the real pipeline (in DEMO MODE: a generic, low-confidence placeholder)."""
+    settings = settings or get_settings()
+    return _is_current_sample(project, settings) and settings.sample_script.exists()
 
 
 def sidecar_for(project: Project, settings: Settings) -> Path | None:
-    if has_reference_script(project):
-        return settings.samples_dir / "sample.transcript.json"
+    if _is_current_sample(project, settings) and settings.sample_transcript.exists():
+        return settings.sample_transcript
     return None
 
 
