@@ -1,0 +1,13 @@
+data/
+models/
+.env
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+frontend/dist/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.ipynb_checkpoints/
+*.log
