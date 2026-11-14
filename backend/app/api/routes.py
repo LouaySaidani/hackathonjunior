@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -95,6 +97,17 @@ def _make_room(s: Session, p: Project, d: Description) -> None:
     if service.extend_to_fit(s, p, d, get_settings().gap_padding_seconds):
         service.add_history(d, "edited", "", f"fin allongée à {d.end:.2f} s pour tenir le texte")
     service.compute_flags(d, get_settings().confidence_threshold)
+
+
+@contextmanager
+def _discard_on_failure(s: Session, project_dir: Path) -> Iterator[None]:
+    """A project whose creation fails must leave nothing behind: no row, no copied video on disk."""
+    try:
+        yield
+    except BaseException:
+        s.rollback()
+        shutil.rmtree(project_dir, ignore_errors=True)
+        raise
 
 
 def _check_interval(s: Session, p: Project, start: float, end: float) -> None:
@@ -195,17 +208,17 @@ async def create_project(
                 filename=(file.filename or "")[:200])
     pdir = service.project_dir(p.id)
     dest = pdir / f"source{ext}"
-    p.size_bytes = await _save_upload(file, dest, st.max_upload_mb * 1024 * 1024)
-    try:
-        meta = media.probe(dest)
-    except media.MediaError as exc:
-        shutil.rmtree(pdir, ignore_errors=True)
-        raise HTTPException(415, f"Vidéo illisible : {exc}") from exc
-    for k in ("duration", "width", "height", "fps", "video_codec", "audio_codec"):
-        setattr(p, k, meta[k])
-    p.video_path = service.rel(dest)
-    s.add(p)
-    s.commit()
+    with _discard_on_failure(s, pdir):
+        p.size_bytes = await _save_upload(file, dest, st.max_upload_mb * 1024 * 1024)
+        try:
+            meta = media.probe(dest)
+        except media.MediaError as exc:
+            raise HTTPException(415, f"Vidéo illisible : {exc}") from exc
+        for k in ("duration", "width", "height", "fps", "video_codec", "audio_codec"):
+            setattr(p, k, meta[k])
+        p.video_path = service.rel(dest)
+        s.add(p)
+        s.commit()
     s.refresh(p)
     return project_summary(s, p)
 
@@ -217,15 +230,17 @@ def create_sample_project(s: Session) -> Project:
         raise HTTPException(404, f"Clip d'exemple absent : {src.name}")
     p = Project(title=st.sample_title or f"Exemple — {src.stem}", language="fr", dialogue_language="auto",
                 consent=True, is_sample=True, filename=src.name)
-    dest = service.project_dir(p.id) / f"source{src.suffix.lower()}"
-    shutil.copyfile(src, dest)
-    meta = media.probe(dest)
-    for k in ("duration", "width", "height", "fps", "video_codec", "audio_codec"):
-        setattr(p, k, meta[k])
-    p.size_bytes = dest.stat().st_size
-    p.video_path = service.rel(dest)
-    s.add(p)
-    s.commit()
+    pdir = service.project_dir(p.id)
+    dest = pdir / f"source{src.suffix.lower()}"
+    with _discard_on_failure(s, pdir):
+        shutil.copyfile(src, dest)
+        meta = media.probe(dest)
+        for k in ("duration", "width", "height", "fps", "video_codec", "audio_codec"):
+            setattr(p, k, meta[k])
+        p.size_bytes = dest.stat().st_size
+        p.video_path = service.rel(dest)
+        s.add(p)
+        s.commit()
     s.refresh(p)
     return p
 
