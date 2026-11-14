@@ -14,7 +14,7 @@ ARTIFACTS_DIR = ML_DIR / "artifacts"  # trained model, loaded by the app
 REPORTS_DIR = ML_DIR / "reports"    # evaluation report + figures
 MODEL_PATH = ARTIFACTS_DIR / "gap_scorer.joblib"
 
-# Make the Basira backend importable so training and the app share the exact same feature code.
+# Make the Wasf backend importable so training and the app share the exact same feature code.
 sys.path.insert(0, str(ROOT / "backend"))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")

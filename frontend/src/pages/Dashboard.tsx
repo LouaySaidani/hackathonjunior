@@ -1,6 +1,7 @@
-import { CheckCircle2, Clapperboard, Eye, FolderOpen, MessageSquareHeart, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle2, Clapperboard, Eye, FolderOpen, MessageSquareHeart, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FilmReel, FilmStrip, VintageCamera } from "../components/Cinema";
 import { ErrorBox, ProgressBar, Spinner, Stat } from "../components/ui";
 import { api, fmtTime, type ProjectSummary } from "../lib/api";
 import { useT, type Key } from "../lib/i18n";
@@ -61,23 +62,52 @@ export default function Dashboard() {
 
   return (
     <>
-      <section className="card relative mb-8 overflow-hidden p-8 md:p-10">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(245,181,68,0.18),transparent_65%)]"
-        />
-        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-semibold text-teal">
-          <Sparkles size={14} aria-hidden="true" /> {t("ethicsNote")}
-        </p>
-        <h1 className="max-w-3xl font-display text-3xl font-semibold leading-tight tracking-tight md:text-5xl">{t("welcome")}</h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted">{t("welcomeSub")}</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link to="/new" className="btn-primary !px-5 !py-2.5 text-base">
-            <Plus size={18} aria-hidden="true" /> {t("createProject")}
-          </Link>
-          <button type="button" className="btn-secondary !px-5 !py-2.5 text-base" onClick={sample} disabled={busy}>
-            <Clapperboard size={18} aria-hidden="true" /> {t("trySample")}
-          </button>
+      {/* Cover, like the first slide of the presentation */}
+      <section
+        aria-labelledby="hero-h"
+        className="relative mb-8 overflow-hidden rounded-[28px] border border-line bg-[#121212] px-6 py-14 text-center md:py-20"
+      >
+        <FilmStrip variant="photo" className="pointer-events-none absolute -left-24 top-8 hidden md:block w-[520px] -rotate-[14deg] opacity-80" />
+        <FilmStrip variant="photo" className="pointer-events-none absolute -right-24 bottom-10 hidden md:block w-[560px] -rotate-[8deg] opacity-80" />
+        <FilmReel className="pointer-events-none absolute -bottom-20 -left-16 hidden h-64 w-64 text-[#d6d6d6] opacity-45 md:block" />
+        <VintageCamera className="pointer-events-none absolute -right-2 top-4 hidden h-48 w-52 text-[#d6d6d6] opacity-45 md:block" />
+        <div className="relative">
+          <h1 id="hero-h" className="font-display text-5xl font-normal tracking-tight md:text-8xl">
+            Wasf <span aria-hidden="true">·</span>{" "}
+            <span lang="ar" className="font-[family-name:var(--font-arabic-display)] font-bold">
+              وصف
+            </span>
+          </h1>
+          <p className="pill mt-6 font-display text-xl md:text-2xl">{t("appTagline")}</p>
+          <p className="mx-auto mt-6 max-w-2xl text-lg font-light text-muted">{t("welcomeSub")}</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link to="/new" className="btn-primary !px-5 !py-2.5 text-base">
+              <Plus size={18} aria-hidden="true" /> {t("createProject")}
+            </Link>
+            <button type="button" className="btn-secondary !px-5 !py-2.5 text-base" onClick={sample} disabled={busy}>
+              <Clapperboard size={18} aria-hidden="true" /> {t("trySample")}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works, like the "La solution" slide: a white panel holding three dark cards */}
+      <section aria-labelledby="how-h" className="panel-paper mb-10 p-6 md:p-8">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {(["step1", "step2", "step3"] as const).map((k, i) => (
+            <div key={k} className="rounded-2xl bg-surface-3 p-6 text-center text-ink">
+              <h3 className="font-display text-2xl">
+                {i + 1} · {t(`${k}Title` as Key)}
+              </h3>
+              <p className="mt-3 font-light leading-relaxed text-[#e6e6e6]">{t(`${k}Text` as Key)}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 grid grid-cols-1 items-center gap-6 md:grid-cols-[auto_1fr] md:px-6">
+          <h2 id="how-h" className="font-display text-5xl leading-none md:text-6xl">
+            {t("howTitle")}
+          </h2>
+          <p className="max-w-2xl text-lg font-light leading-relaxed">{t("howText")}</p>
         </div>
       </section>
 

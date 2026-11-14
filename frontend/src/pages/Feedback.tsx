@@ -119,7 +119,7 @@ export default function FeedbackPage() {
                     pref === p ? "border-accent bg-surface-3" : "border-line bg-surface-2"
                   }`}
                 >
-                  <input type="radio" name="pref" value={p} checked={pref === p} onChange={() => setPref(p)} className="h-4 w-4 accent-[#f5b544]" />
+                  <input type="radio" name="pref" value={p} checked={pref === p} onChange={() => setPref(p)} className="h-4 w-4 accent-[#f4f4f4]" />
                   {t(`pref_${p}` as Key)}
                 </label>
               ))}
@@ -135,7 +135,7 @@ export default function FeedbackPage() {
 
           <div className="space-y-3 rounded-xl border border-line bg-surface-2 p-4">
             <div className="flex items-start gap-3">
-              <input id={ids.paid} type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} className="mt-1 h-5 w-5 accent-[#f5b544]" />
+              <input id={ids.paid} type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} className="mt-1 h-5 w-5 accent-[#f4f4f4]" />
               <label htmlFor={ids.paid} className="text-sm">
                 {t("fbPaid")}
               </label>
@@ -147,7 +147,7 @@ export default function FeedbackPage() {
                 aria-required="true"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-5 w-5 accent-[#f5b544]"
+                className="mt-1 h-5 w-5 accent-[#f4f4f4]"
               />
               <label htmlFor={ids.consent} className="text-sm font-medium">
                 {t("fbConsent")} <span aria-hidden="true" className="text-accent">*</span>

@@ -1,6 +1,6 @@
 # Apprentissage automatique : quels silences décrire ?
 
-Basira trouve tous les silences d'au moins 1,5 s. Mais un·e audiodescripteur·rice humain·e ne les décrit pas tous : seulement ceux où quelque chose d'important se passe à l'image. Ce dossier entraîne un **modèle qui apprend où les humains placent leurs descriptions**. Basira l'utilise ensuite pour ne faire rédiger Gemini que dans les silences pertinents.
+Wasf trouve tous les silences d'au moins 1,5 s. Mais un·e audiodescripteur·rice humain·e ne les décrit pas tous : seulement ceux où quelque chose d'important se passe à l'image. Ce dossier entraîne un **modèle qui apprend où les humains placent leurs descriptions**. Wasf l'utilise ensuite pour ne faire rédiger Gemini que dans les silences pertinents.
 
 | | Rôle | Entraîné par nous ? |
 |---|---|---|
@@ -14,7 +14,7 @@ Basira trouve tous les silences d'au moins 1,5 s. Mais un·e audiodescripteur·r
 [QuerYD](https://www.robots.ox.ac.uk/~vgg/data/queryd/) (université d'Oxford, ICASSP 2021) rassemble des vidéos YouTube audiodécrites par les bénévoles de [YouDescribe](https://youdescribe.org). Pour chaque description, les métadonnées donnent :
 
 - le moment où elle commence dans la vidéo ;
-- son type : `inline` (dite par-dessus la vidéo, exactement le cas de Basira) ou `extended` (la vidéo est mise en pause) ;
+- son type : `inline` (dite par-dessus la vidéo, exactement le cas de Wasf) ou `extended` (la vidéo est mise en pause) ;
 - sa transcription.
 
 Les noms et e-mails des bénévoles présents dans les métadonnées brutes **ne sont pas conservés**.
@@ -28,7 +28,7 @@ pip install -r ml/requirements.txt
 python ml/run_all.py --train 17 --test 13     # ou : make ml
 ```
 
-Durée indicative : 15 à 30 minutes sur CPU (surtout le téléchargement). Redémarrez ensuite Basira : le modèle est chargé automatiquement depuis `ml/artifacts/`.
+Durée indicative : 15 à 30 minutes sur CPU (surtout le téléchargement). Redémarrez ensuite Wasf : le modèle est chargé automatiquement depuis `ml/artifacts/`.
 
 Étape par étape :
 
@@ -36,7 +36,7 @@ Durée indicative : 15 à 30 minutes sur CPU (surtout le téléchargement). Red�
 |---|---|---|
 | `fetch_queryd.py` | télécharge les métadonnées QuerYD (68 Mo) et sélectionne les vidéos candidates | `ml/data/candidates.json` |
 | `download.py` | télécharge les vidéos (yt-dlp, 480p) jusqu'à en avoir 30, puis les répartit **par vidéo** : 17 entraînement / 13 test | `ml/data/videos/`, `dataset.json` |
-| `features.py` | fait tourner **le pipeline de Basira** sur chaque vidéo (audio, VAD, silences, plans) et calcule 24 variables par silence ; étiquette 1 si un humain a commencé une description dans ce silence (tolérance 1 s) | `features.csv` |
+| `features.py` | fait tourner **le pipeline de Wasf** sur chaque vidéo (audio, VAD, silences, plans) et calcule 24 variables par silence ; étiquette 1 si un humain a commencé une description dans ce silence (tolérance 1 s) | `features.csv` |
 | `train.py` | compare régression logistique, forêt aléatoire et gradient boosting en validation croisée **groupée par vidéo** ; garde le meilleur ; choisit le seuil sur l'entraînement uniquement | `ml/artifacts/gap_scorer.joblib` |
 | `evaluate.py` | évalue sur les 13 vidéos **jamais vues** ; compare à « tous les silences » et à une règle de durée ; intervalles de confiance par bootstrap ; importance des variables ; frises | `ml/reports/report.md` + figures |
 
@@ -46,7 +46,7 @@ Options utiles : `features.py --asr` (ajoute Whisper comme dans l'application, p
 
 Rapport complet : [reports/report.md](reports/report.md).
 
-**Découverte faite grâce aux données.** Au départ, Basira donnait un seul brouillon par silence, même pour un passage muet de 150 s. Les humains, eux, décrivent environ toutes les 10 à 25 s. Les longs silences sont maintenant **découpés en créneaux d'environ 10 s**, aux changements de plan quand c'est possible (`MAX_SLOT_SECONDS`, même code dans l'application et ici). Avec ce découpage, **91 % des descriptions humaines** (407 sur 448) commencent dans un créneau où Basira peut rédiger.
+**Découverte faite grâce aux données.** Au départ, Wasf donnait un seul brouillon par silence, même pour un passage muet de 150 s. Les humains, eux, décrivent environ toutes les 10 à 25 s. Les longs silences sont maintenant **découpés en créneaux d'environ 10 s**, aux changements de plan quand c'est possible (`MAX_SLOT_SECONDS`, même code dans l'application et ici). Avec ce découpage, **91 % des descriptions humaines** (407 sur 448) commencent dans un créneau où Wasf peut rédiger.
 
 **Sélection des créneaux, sur 13 vidéos jamais vues** (276 créneaux, dont 61 % décrits par un humain) :
 
@@ -94,7 +94,7 @@ puis `python ml/run_all.py --skip-download`. Les identifiants doivent être uniq
 
 ## Vidéos pour tester l'application
 
-- Les **13 vidéos de test** (`ml/data/videos/`, liste dans `dataset.json` avec `"split": "test"`) : importez-les dans Basira et comparez avec la description humaine. Le rapport donne leurs liens YouTube.
+- Les **13 vidéos de test** (`ml/data/videos/`, liste dans `dataset.json` avec `"split": "test"`) : importez-les dans Wasf et comparez avec la description humaine. Le rapport donne leurs liens YouTube.
 - Films ouverts de la Blender Foundation (CC-BY) : *Tears of Steel* (dialogues + action), *Sintel*, *Spring*, *Sprite Fright* — [studio.blender.org/films](https://studio.blender.org/films/).
 - Wikimedia Commons et Internet Archive (collection Prelinger, films du domaine public, dont le cinéma muet français).
 

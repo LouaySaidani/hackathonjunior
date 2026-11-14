@@ -54,7 +54,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Basira — AI Audio Description Co-Pilot", version=__version__, lifespan=lifespan)
+app = FastAPI(title="Wasf — AI Audio Description Co-Pilot", version=__version__, lifespan=lifespan)
 app.include_router(router)
 
 

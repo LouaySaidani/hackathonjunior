@@ -1,4 +1,4 @@
-"""Step 3 - run Basira's own analysis on each video and build the training table.
+"""Step 3 - run Wasf's own analysis on each video and build the training table.
 
 For every video of ml/data/dataset.json:
   audio 16 kHz -> VAD (+ optional Whisper) -> silences -> shot changes -> features per silence,

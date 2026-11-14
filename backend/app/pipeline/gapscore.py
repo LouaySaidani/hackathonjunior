@@ -1,7 +1,7 @@
 """Gap relevance scoring: which silences deserve an audio description?
 
 A small supervised model, trained on human audio descriptions (QuerYD / YouDescribe, see `ml/`),
-scores every silence Basira finds. The *same* feature code runs at training time and inside the
+scores every silence Wasf finds. The *same* feature code runs at training time and inside the
 app, so the model never sees features computed differently from the ones it was trained on.
 
 Features are cheap and explainable (duration, surrounding dialogue, shot changes, motion,

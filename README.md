@@ -1,4 +1,4 @@
-# Basira <span lang="ar">بصيرة</span> — copilote d'audiodescription assisté par IA
+# Wasf <span lang="ar">وصف</span> — copilote d'audiodescription assisté par IA
 
 **Des brouillons d'audiodescription générés dans les silences des films tunisiens et francophones, relus et validés ligne par ligne par un·e audiodescripteur·rice humain·e.**
 
@@ -8,7 +8,7 @@
 ![Accessibilité Lighthouse 100](https://img.shields.io/badge/Lighthouse%20a11y-100-brightgreen)
 
 > Projet réalisé pour le hackathon **OIF × JEI « IA Éthique 360 »**.
-> **Basira** (*بصيرة*) signifie « clairvoyance », la vision intérieure.
+> **Wasf** (*وصف*) signifie « description » en arabe. *L'IA décrit. L'humain valide.*
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## La solution
 
-Basira divise le travail d'audiodescription en étapes que l'IA accélère, sans jamais retirer la décision à l'humain :
+Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans jamais retirer la décision à l'humain :
 
 1. l'IA **repère les silences** du film et **propose des brouillons** de description à partir de quelques images clés ;
 2. un·e **audiodescripteur·rice humain·e corrige, recale, régénère, valide ou rejette chaque ligne** ;
@@ -33,7 +33,7 @@ Basira divise le travail d'audiodescription en étapes que l'IA accélère, sans
 <td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 4/17, cartes de description avec les états Validé par un humain et Modifié par un humain, voix générée"></td>
 </tr>
 <tr>
-<td><b>Analyse</b> : Whisper transcrit les dialogues, Basira trouve les silences et les découpe en créneaux, le modèle ML donne à chaque créneau un score de pertinence, puis Gemini rédige à partir des images clés.</td>
+<td><b>Analyse</b> : Whisper transcrit les dialogues, Wasf trouve les silences et les découpe en créneaux, le modèle ML donne à chaque créneau un score de pertinence, puis Gemini rédige à partir des images clés.</td>
 <td><b>Éditeur</b> : chaque brouillon est relu, corrigé, recalé, puis <b>validé par une personne nommée</b>. Seules les lignes validées sont vocalisées et mixées dans le film.</td>
 </tr>
 </table>
@@ -70,7 +70,7 @@ Ensuite : **Tableau de bord → « Essayer le clip d'exemple » → Lancer l'ana
 
 Pour utiliser un vrai modèle de vision, copiez `.env.example` en `.env` et renseignez `GEMINI_API_KEY` ([clé gratuite sur Google AI Studio](https://aistudio.google.com/apikey)), ou `OPENAI_API_KEY` avec `OPENAI_BASE_URL` pour tout serveur compatible OpenAI (vLLM, Ollama…). Relancez ensuite `docker compose up --build`.
 
-> **Quota gratuit Gemini** : environ 20 requêtes par jour et par modèle. Basira décrit 8 créneaux par requête (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota est épuisé.
+> **Quota gratuit Gemini** : environ 20 requêtes par jour et par modèle. Wasf décrit 8 créneaux par requête (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota est épuisé.
 
 ### Parcours complet : de la vidéo au film audiodécrit
 
@@ -139,9 +139,9 @@ Un·e audiodescripteur·rice ne décrit pas tous les silences, et décrit un lon
 
 **Données.** [QuerYD](https://www.robots.ox.ac.uk/~vgg/data/queryd/) (Oxford, ICASSP 2021) : vidéos YouTube audiodécrites par les bénévoles de [YouDescribe](https://youdescribe.org), avec l'horodatage et le type de chaque description. On conserve uniquement les horaires, le type et le texte des descriptions ; les noms et e-mails des bénévoles sont supprimés. Nous avons pris **30 vidéos** (films, courts métrages d'animation, extraits) : **17 pour l'entraînement, 13 pour le test**. Chaque vidéo n'appartient qu'à un seul des deux ensembles.
 
-**Méthode.** Chaque vidéo passe par **le pipeline de Basira lui-même**. Chaque créneau reçoit 24 variables : durée, dialogue autour, changements de plan, mouvement, luminosité, niveau sonore, musique. Il est étiqueté 1 si un humain y a commencé une description. On compare trois modèles (régression logistique, forêt aléatoire, gradient boosting) en validation croisée par vidéo. Le seuil de décision est choisi sur l'entraînement uniquement.
+**Méthode.** Chaque vidéo passe par **le pipeline de Wasf lui-même**. Chaque créneau reçoit 24 variables : durée, dialogue autour, changements de plan, mouvement, luminosité, niveau sonore, musique. Il est étiqueté 1 si un humain y a commencé une description. On compare trois modèles (régression logistique, forêt aléatoire, gradient boosting) en validation croisée par vidéo. Le seuil de décision est choisi sur l'entraînement uniquement.
 
-**Ce que les données nous ont appris.** La première version donnait **un seul brouillon par silence**, même pour 150 s sans dialogue, alors que les humains décrivent environ toutes les 10 à 25 s. Basira **découpe désormais les longs silences en créneaux d'environ 10 s**, aux changements de plan. Résultat : **91 % des descriptions humaines** (407 sur 448) commencent dans un créneau où Basira peut rédiger.
+**Ce que les données nous ont appris.** La première version donnait **un seul brouillon par silence**, même pour 150 s sans dialogue, alors que les humains décrivent environ toutes les 10 à 25 s. Wasf **découpe désormais les longs silences en créneaux d'environ 10 s**, aux changements de plan. Résultat : **91 % des descriptions humaines** (407 sur 448) commencent dans un créneau où Wasf peut rédiger.
 
 **Résultats sur les 13 vidéos de test** (276 créneaux, [rapport complet](ml/reports/report.md)) :
 
@@ -259,7 +259,7 @@ cd ../frontend && npm run build
 ## Limites honnêtes
 
 - **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour une vidéo fournie avec un script de référence (la vidéo d'exemple `samples/vd_test.mp4` et le clip de test synthétique), elle renvoie ce script relu par un humain (`scripts/export_reference.py` le produit à partir d'un projet validé) ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
-- **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Basira décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
+- **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Wasf décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
 - **Modèle ML** : entraîné sur 17 vidéos seulement, avec des descriptions bénévoles en anglais. Il apprend *où* décrire, pas *quoi* ni dans quelle langue, et ne bat pas encore la règle « tout décrire » (voir [les résultats](#apprentissage-automatique--où-décrire-)). Son transfert vers des films tunisiens reste à vérifier.
 - **Darija** : Whisper générique transcrit mal la darija et l'alternance arabe/français ; la voix `ar-TN` lit le darija de façon approximative, ce qui est signalé à l'audiodescripteur·rice. D'où le fine-tuning prévu.
@@ -267,14 +267,14 @@ cd ../frontend && npm run build
 - La détection de scène par score FFmpeg ne repère pas toujours les fondus progressifs ; une image clé au milieu de chaque silence est toujours extraite.
 - Débit de parole estimé en mots par seconde : c'est une approximation, la durée réelle de l'audio est vérifiée au moment de la voix.
 - File de tâches en mémoire : une tâche interrompue par un redémarrage est marquée en erreur et doit être relancée.
-- **Modèle économique** : en Tunisie, personne n'est légalement tenu de financer l'audiodescription. Pistes : festivals (JCC…), télévision publique (Al Wataniya), subventions OIF, UE ou ambassades, mécénat. Basira vise à baisser le coût par film, pas à supprimer le métier.
+- **Modèle économique** : en Tunisie, personne n'est légalement tenu de financer l'audiodescription. Pistes : festivals (JCC…), télévision publique (Al Wataniya), subventions OIF, UE ou ambassades, mécénat. Wasf vise à baisser le coût par film, pas à supprimer le métier.
 - Nous ne donnons **aucune statistique** sur le nombre de personnes aveugles en Tunisie : nous n'avons pas de source vérifiée.
 
 ## Licences des données et des modèles
 
 | Élément | Licence |
 |---|---|
-| Code de Basira | Apache-2.0 ([LICENSE](LICENSE)) |
+| Code de Wasf | Apache-2.0 ([LICENSE](LICENSE)) |
 | Vidéo d'exemple `samples/vd_test.mp4` | **Extrait de film protégé**, tous droits réservés : test et jury uniquement, dépôt privé, à retirer avant toute publication ([samples/LICENSE.md](samples/LICENSE.md)) |
 | Clip de test synthétique, transcription et script de référence | CC0 1.0 ([backend/tests/fixtures/LICENSE.md](backend/tests/fixtures/LICENSE.md)) |
 | faster-whisper / CTranslate2 | MIT ; poids Whisper d'OpenAI sous MIT |
@@ -299,4 +299,4 @@ cd ../frontend && npm run build
 
 ## English summary
 
-**Basira** is a human-in-the-loop **AI audio description co-pilot** for Tunisian and Francophone films. It finds silent gaps (FFmpeg + Silero VAD + faster-whisper), extracts only 1–3 keyframes per gap, and asks a vision-language model (Gemini, any OpenAI-compatible endpoint, or a clearly-labelled DEMO provider) for short drafts in **French, Modern Standard Arabic or Tunisian darija**. A human describer edits, re-times, regenerates, **validates (by name, line by line or all at once) or rejects every line**; nothing is ever auto-validated and only validated lines are voiced and exported. Long silences are split into ~10 s slots, and a **scikit-learn model trained on human audio descriptions** (QuerYD/YouDescribe, 17 training / 13 unseen test videos, full report in `ml/reports/`) scores each slot; the human can still draft anywhere. Voice comes from edge-tts/espeak-ng. Exports: ducked MP4, AD track, WebVTT (kind=descriptions, RTL-aware), TTML, credits and a script delivered to the rights holder. Includes a blind-tester feedback page, FR/EN UI, Lighthouse accessibility 100, Docker image (`docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest`) and CI. Without API keys it runs in an explicit **DEMO MODE**.
+**Wasf** is a human-in-the-loop **AI audio description co-pilot** for Tunisian and Francophone films. It finds silent gaps (FFmpeg + Silero VAD + faster-whisper), extracts only 1–3 keyframes per gap, and asks a vision-language model (Gemini, any OpenAI-compatible endpoint, or a clearly-labelled DEMO provider) for short drafts in **French, Modern Standard Arabic or Tunisian darija**. A human describer edits, re-times, regenerates, **validates (by name, line by line or all at once) or rejects every line**; nothing is ever auto-validated and only validated lines are voiced and exported. Long silences are split into ~10 s slots, and a **scikit-learn model trained on human audio descriptions** (QuerYD/YouDescribe, 17 training / 13 unseen test videos, full report in `ml/reports/`) scores each slot; the human can still draft anywhere. Voice comes from edge-tts/espeak-ng. Exports: ducked MP4, AD track, WebVTT (kind=descriptions, RTL-aware), TTML, credits and a script delivered to the rights holder. Includes a blind-tester feedback page, FR/EN UI, Lighthouse accessibility 100, Docker image (`docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest`) and CI. Without API keys it runs in an explicit **DEMO MODE**.

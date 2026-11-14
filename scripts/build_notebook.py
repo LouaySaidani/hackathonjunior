@@ -7,7 +7,7 @@ import nbformat as nbf
 nb = nbf.v4.new_notebook()
 md, code = nbf.v4.new_markdown_cell, nbf.v4.new_code_cell
 nb.cells = [
-    md("""# Basira — démonstration du pipeline (DEMO MODE)
+    md("""# Wasf — démonstration du pipeline (DEMO MODE)
 
 Ce notebook exécute, sur le clip d'exemple **synthétique et libre de droits** (`backend/tests/fixtures/sample_medina.mp4`, CC0),
 les étapes clés du pipeline : extraction audio → détection de la parole (VAD) → transcription →

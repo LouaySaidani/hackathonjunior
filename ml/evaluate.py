@@ -1,7 +1,7 @@
 """Step 5 - evaluate on the test videos (never seen during training) and write the report.
 
 Compares the model with two baselines:
-  - "tous les silences": what Basira did before ML (every silence >= 1.5 s gets a draft)
+  - "tous les silences": what Wasf did before ML (every silence >= 1.5 s gets a draft)
   - "règle de durée": silences longer than a duration threshold learned on the training videos
 Reports precision / recall / F1, average precision, the share of silences drafted, how many human
 descriptions fall in a selected silence, 95 % bootstrap intervals (resampling test videos), the
@@ -237,7 +237,7 @@ def write_markdown(r: dict, scorer: GapScorer, out: Path) -> None:
         "",
         "| Méthode | Précision | Rappel | F1 | Silences rédigés |",
         "|---|---|---|---|---|",
-        f"| Tous les silences (Basira avant ML) | {pct(a['precision'])} | {pct(a['recall'])} | {a['f1']:.2f} | "
+        f"| Tous les silences (Wasf avant ML) | {pct(a['precision'])} | {pct(a['recall'])} | {a['f1']:.2f} | "
         f"{pct(a['selected_share'])} |",
         f"| Règle de durée (≥ {d['min_duration']:.1f} s, apprise) | {pct(d['precision'])} | {pct(d['recall'])} | "
         f"{d['f1']:.2f} | {pct(d['selected_share'])} |",

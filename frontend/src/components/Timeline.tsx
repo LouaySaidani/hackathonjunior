@@ -101,7 +101,7 @@ export default function Timeline({ duration, speech, gaps, descriptions = [], cu
           step={0.1}
           value={current}
           onChange={(e) => onSeek(Number(e.target.value))}
-          className="w-full accent-[#f5b544]"
+          className="w-full accent-[#f4f4f4]"
           aria-valuetext={fmtTime(current)}
         />
       </label>

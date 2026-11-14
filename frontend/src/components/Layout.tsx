@@ -3,17 +3,25 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { NavLink, Outlet } from "react-router-dom";
 import { api, type SystemInfo } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { FilmStrip } from "./Cinema";
 
 const SystemCtx = createContext<SystemInfo | null>(null);
 export const useSystem = () => useContext(SystemCtx);
 
+/** A film reel, white on black: the same mark as the favicon. */
 function Logo() {
   return (
-    <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#1a1e29" />
-      <path d="M8 32c6-11 14-17 24-17s18 6 24 17c-6 11-14 17-24 17S14 43 8 32z" fill="none" stroke="#f5b544" strokeWidth="4" />
-      <circle cx="32" cy="32" r="7" fill="#f5b544" />
-      <path d="M44 22c3 3 4 6 4 10s-1 7-4 10" fill="none" stroke="#5eead4" strokeWidth="3" strokeLinecap="round" />
+    <svg width="36" height="36" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#0b0b0b" />
+      <g fill="none" stroke="#f4f4f4" strokeWidth="3.2">
+        <circle cx="32" cy="32" r="23" />
+        <circle cx="32" cy="32" r="4.5" />
+        <circle cx="32" cy="19" r="5.5" />
+        <circle cx="44.4" cy="28" r="5.5" />
+        <circle cx="39.6" cy="42.5" r="5.5" />
+        <circle cx="24.4" cy="42.5" r="5.5" />
+        <circle cx="19.6" cy="28" r="5.5" />
+      </g>
     </svg>
   );
 }
@@ -65,8 +73,11 @@ export default function Layout() {
           <NavLink to="/" className="mr-4 flex items-center gap-3 rounded-xl">
             <Logo />
             <span className="leading-tight">
-              <span className="block font-display text-lg font-semibold">
-                Basira <span lang="ar" className="text-accent">بصيرة</span>
+              <span className="block font-display text-xl font-medium">
+                Wasf <span aria-hidden="true">·</span>{" "}
+                <span lang="ar" className="font-[family-name:var(--font-arabic-display)] font-bold">
+                  وصف
+                </span>
               </span>
               <span className="block text-xs text-muted">{t("appTagline")}</span>
             </span>
@@ -92,6 +103,7 @@ export default function Layout() {
             <span lang={lang === "fr" ? "en" : "fr"}>{t("switchLang")}</span>
           </button>
         </div>
+        <FilmStrip />
       </header>
       <main id="main" tabIndex={-1} className="mx-auto max-w-[1400px] px-4 py-8 outline-none md:px-6">
         <Outlet />
@@ -100,7 +112,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-[1400px] flex-wrap justify-between gap-2 px-4 py-6 text-sm text-muted md:px-6">
           <p>{t("ethicsNote")}</p>
           <p>
-            OIF × JEI — IA Éthique 360 · Apache-2.0 ·{" "}
+            OIF × JEI — IA Éthique 360 · {t("teamCredit")} · Apache-2.0 ·{" "}
             <a className="underline hover:text-ink" href="/docs" target="_blank" rel="noreferrer">
               API
             </a>

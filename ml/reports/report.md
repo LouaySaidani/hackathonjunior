@@ -8,7 +8,7 @@ Question posée au modèle : *un·e audiodescripteur·rice humain·e aurait-il·
 
 | Méthode | Précision | Rappel | F1 | Silences rédigés |
 |---|---|---|---|---|
-| Tous les silences (Basira avant ML) | 61 % | 100 % | 0.76 | 100 % |
+| Tous les silences (Wasf avant ML) | 61 % | 100 % | 0.76 | 100 % |
 | Règle de durée (≥ 3.0 s, apprise) | 65 % | 95 % | 0.77 | 89 % |
 | **Modèle ML** | **62 %** | **96 %** | **0.75** | **95 %** |
 

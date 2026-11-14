@@ -25,7 +25,7 @@ build:
 	cd frontend && npm run build
 
 docker:
-	docker build -t basira:local .
+	docker build -t wasf:local .
 
 up:
 	docker compose up --build

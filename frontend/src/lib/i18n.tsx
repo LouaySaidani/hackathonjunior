@@ -5,7 +5,8 @@ export type UiLang = "fr" | "en";
 const dict = {
   fr: {
     skip: "Aller au contenu principal",
-    appTagline: "Copilote d'audiodescription",
+    appTagline: "L'IA décrit. L'humain valide.",
+    teamCredit: "Équipe Mojo-Jojo",
     navDashboard: "Tableau de bord",
     navNew: "Nouveau projet",
     navFeedback: "Retours testeurs",
@@ -17,8 +18,16 @@ const dict = {
     // dashboard
     welcome: "Rendre le patrimoine audiovisuel tunisien accessible",
     welcomeSub:
-      "Basira prépare des brouillons d'audiodescription à partir des silences d'un film. Un·e audiodescripteur·rice humain·e corrige et valide chaque ligne ; des relecteur·rice·s aveugles évaluent le résultat.",
+      "Wasf prépare des brouillons d'audiodescription à partir des silences d'un film. Un·e audiodescripteur·rice humain·e corrige et valide chaque ligne ; des relecteur·rice·s aveugles évaluent le résultat.",
     createProject: "Créer un projet",
+    howTitle: "La solution",
+    howText: "Wasf : un assistant d'audiodescription pour les films tunisiens et francophones. L'IA fait le brouillon, l'humain garde la plume.",
+    step1Title: "Repérer",
+    step1Text: "Wasf trouve les silences entre les dialogues et en extrait les images clés.",
+    step2Title: "Proposer",
+    step2Text: "L'IA rédige une description courte et objective, qui tient dans le silence, en français ou en arabe.",
+    step3Title: "Valider",
+    step3Text: "L'audiodescripteur relit, corrige et valide chaque ligne. Puis export : vidéo mixée + sous-titres.",
     trySample: "Essayer le clip d'exemple",
     recentProjects: "Projets récents",
     noProjects: "Aucun projet pour l'instant.",
@@ -226,7 +235,8 @@ const dict = {
   },
   en: {
     skip: "Skip to main content",
-    appTagline: "Audio description co-pilot",
+    appTagline: "AI describes. Humans validate.",
+    teamCredit: "Team Mojo-Jojo",
     navDashboard: "Dashboard",
     navNew: "New project",
     navFeedback: "Tester feedback",
@@ -237,8 +247,16 @@ const dict = {
       "No API key configured: visual understanding and drafting are SIMULATED (sample data). Transcription, silence detection, voice and mixing are real.",
     welcome: "Making Tunisian audiovisual heritage accessible",
     welcomeSub:
-      "Basira drafts audio description from a film's silences. A human describer edits and validates every line; blind proofreaders evaluate the result.",
+      "Wasf drafts audio description from a film's silences. A human describer edits and validates every line; blind proofreaders evaluate the result.",
     createProject: "Create a project",
+    howTitle: "The solution",
+    howText: "Wasf: an audio description assistant for Tunisian and Francophone films. AI writes the draft, the human keeps the pen.",
+    step1Title: "Spot",
+    step1Text: "Wasf finds the silences between dialogue and extracts their keyframes.",
+    step2Title: "Propose",
+    step2Text: "AI writes a short, objective description that fits the silence, in French or Arabic.",
+    step3Title: "Validate",
+    step3Text: "The describer reviews, edits and validates every line. Then export: mixed video + subtitles.",
     trySample: "Try the sample clip",
     recentProjects: "Recent projects",
     noProjects: "No projects yet.",
@@ -451,7 +469,7 @@ const I18nCtx = createContext<Ctx | null>(null);
 
 function initial(): UiLang {
   try {
-    const v = localStorage.getItem("basira.lang");
+    const v = localStorage.getItem("wasf.lang") || localStorage.getItem("basira.lang");
     if (v === "fr" || v === "en") return v;
   } catch {
     /* storage unavailable */
@@ -467,7 +485,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLang = (l: UiLang) => {
     setLangState(l);
     try {
-      localStorage.setItem("basira.lang", l);
+      localStorage.setItem("wasf.lang", l);
     } catch {
       /* ignore */
     }

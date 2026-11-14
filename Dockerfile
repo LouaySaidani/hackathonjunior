@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # ---------- 3. runtime ----------
 FROM python:3.11-slim
-LABEL org.opencontainers.image.title="Basira - AI audio description co-pilot" \
+LABEL org.opencontainers.image.title="Wasf - AI audio description co-pilot" \
       org.opencontainers.image.description="Human-in-the-loop audio description for Tunisian and Francophone films" \
       org.opencontainers.image.licenses="Apache-2.0"
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg espeak-ng curl \

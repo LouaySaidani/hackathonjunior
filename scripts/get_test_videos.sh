@@ -8,7 +8,7 @@ OUT=videos_test
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$OUT"
-UA="basira-test-videos/1.0 (educational accessibility project)"
+UA="wasf-test-videos/1.0 (educational accessibility project)"
 W=https://upload.wikimedia.org/wikipedia/commons
 
 # encode <source> <start> <duration> <name>: 480p H.264/AAC extract
@@ -47,6 +47,6 @@ Vous pouvez les utiliser, les modifier (y compris leur ajouter une audiodescript
 | `04_caminandes_llama_drama.mp4` | *Caminandes: Llama Drama* (2013), © Blender Foundation, caminandes.com | CC-BY 3.0 | court, comique, sans dialogue |
 | `05_sintel_bande_annonce.mp4` | *Sintel* (bande-annonce, 2010), © Blender Foundation, durian.blender.org | CC-BY 3.0 | très court (1 min) : idéal pour un premier essai |
 
-Extraits recadrés en 480p par `ffmpeg` pour le test de Basira. Sources : download.blender.org et Wikimedia Commons.
+Extraits recadrés en 480p par `ffmpeg` pour le test de Wasf. Sources : download.blender.org et Wikimedia Commons.
 EOF
 echo "Vidéos prêtes dans $OUT/ (crédits : $OUT/CREDITS.md)"

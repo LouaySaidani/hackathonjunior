@@ -3,7 +3,7 @@
 QuerYD (Oncescu et al., ICASSP 2021, https://www.robots.ox.ac.uk/~vgg/data/queryd/) is built on
 YouDescribe: volunteers recorded audio descriptions for YouTube videos. For each description clip
 the metadata gives the video time where it starts and whether it is `inline` (spoken over the
-video, exactly Basira's case) or `extended` (the video is paused).
+video, exactly Wasf's case) or `extended` (the video is paused).
 
 Only timings, playback type and transcript text are kept. Describer names, e-mails and account
 ids present in the raw metadata are dropped on purpose.

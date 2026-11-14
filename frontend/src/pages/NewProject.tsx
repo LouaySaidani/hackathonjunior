@@ -220,7 +220,7 @@ export default function NewProject() {
                 aria-required="true"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-5 w-5 accent-[#f5b544]"
+                className="mt-1 h-5 w-5 accent-[#f4f4f4]"
               />
               <label htmlFor={ids.consent} className="text-sm font-medium">
                 {t("consent")} <span aria-hidden="true" className="text-accent">*</span>
@@ -232,7 +232,7 @@ export default function NewProject() {
                 type="checkbox"
                 checked={optIn}
                 onChange={(e) => setOptIn(e.target.checked)}
-                className="mt-1 h-5 w-5 accent-[#f5b544]"
+                className="mt-1 h-5 w-5 accent-[#f4f4f4]"
               />
               <label htmlFor={ids.optin} className="text-sm text-muted">
                 {t("optIn")}

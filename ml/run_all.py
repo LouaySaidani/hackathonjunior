@@ -33,7 +33,7 @@ def main() -> None:
     step("train.py")
     step("evaluate.py")
     print("\nTerminé. Rapport : ml/reports/report.md - modèle : ml/artifacts/gap_scorer.joblib")
-    print("Redémarrez Basira pour qu'il utilise le nouveau modèle.")
+    print("Redémarrez Wasf pour qu'il utilise le nouveau modèle.")
 
 
 if __name__ == "__main__":

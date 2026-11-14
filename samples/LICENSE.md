@@ -3,7 +3,7 @@
 `vd_test.mp4` (2 min 30, 852×480) est un **extrait de film commercial, protégé par le droit d'auteur**.
 Tous les droits appartiennent à leurs ayants droit. Il n'est **pas** placé sous licence libre.
 
-- Il sert uniquement à **tester Basira et à le présenter au jury du hackathon**, dans ce **dépôt privé**.
+- Il sert uniquement à **tester Wasf et à le présenter au jury du hackathon**, dans ce **dépôt privé**.
 - **Ne pas le redistribuer** ni l'utiliser en dehors de ce cadre.
 - **À retirer de tout l'historique git** (pas seulement du dernier commit) avant de rendre le dépôt public
   ou de publier une image Docker publique : le `Dockerfile` copie le dossier `samples/`.
@@ -12,7 +12,7 @@ Tous les droits appartiennent à leurs ayants droit. Il n'est **pas** placé sou
 
 ## Fichiers de référence (DEMO MODE)
 
-- `vd_test.script.json` : les 17 descriptions utilisées à la place de Gemini quand Basira tourne sans clé
+- `vd_test.script.json` : les 17 descriptions utilisées à la place de Gemini quand Wasf tourne sans clé
   d'API. Rédigées par Gemini puis **relues, corrigées et validées par un humain** dans l'éditeur, puis
   exportées avec `python scripts/export_reference.py <id_du_projet>`.
 - `vd_test.transcript.json` : les dialogues transcrits par Whisper, utilisés à la place de Whisper sans

@@ -1,6 +1,6 @@
 # Éthique 360 — choix de conception
 
-Basira est conçu pour le hackathon OIF × JEI « IA Éthique 360 ». Chaque principe ci-dessous est **implémenté dans le
+Wasf est conçu pour le hackathon OIF × JEI « IA Éthique 360 ». Chaque principe ci-dessous est **implémenté dans le
 code** ; le fichier et le comportement correspondants sont indiqués.
 
 ## 1. Créateurs et métiers : l'IA assiste, l'humain décide

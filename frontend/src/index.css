@@ -1,28 +1,33 @@
 @import "tailwindcss";
 
-/* Design tokens — dark cinematic theme, contrast checked against WCAG AA on --color-bg / --color-surface */
+/* Design tokens — black & white "cinéma rétro", like the Wasf presentation.
+   Monochrome everywhere; colour only for line states (AI draft, edited, validated, rejected) and warnings.
+   Contrast checked against WCAG AA on --color-bg / --color-surface. */
 @theme {
-  --color-bg: #0b0d12;
-  --color-surface: #12151d;
-  --color-surface-2: #1a1e29;
-  --color-surface-3: #232838;
-  --color-line: #2c3244;
-  --color-ink: #eceef4;
-  --color-muted: #a9b0c0;
-  --color-subtle: #8c94a7;
-  --color-accent: #f5b544; /* soleil de Tunis — used sparingly */
-  --color-accent-ink: #1a1203;
-  --color-teal: #5eead4;
+  --color-bg: #161616;
+  --color-surface: #1e1e1e;
+  --color-surface-2: #262626;
+  --color-surface-3: #303030;
+  --color-line: #3a3a3a;
+  --color-ink: #f4f4f4;
+  --color-muted: #b8b8b8;
+  --color-subtle: #9c9c9c;
+  --color-accent: #f4f4f4; /* white: primary actions, focus, playhead */
+  --color-accent-ink: #111111;
+  --color-teal: #d4d4d4; /* light grey: secondary highlights */
+  --color-paper: #ffffff; /* the white panels of the presentation */
+  --color-paper-ink: #111111;
   --color-ai: #c4a7ff;
   --color-edited: #7cc4ff;
   --color-valid: #6ee7a0;
   --color-reject: #ff9a9a;
   --color-warn: #fbbf5a;
-  --color-speech: #3b4a6b;
-  --color-gap: #1f5f55;
-  --font-sans: "Inter", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --color-speech: #474747; /* dialogue: dark */
+  --color-gap: #cfcfcf; /* usable silence: light, it is what the describer looks for */
+  --font-sans: "Figtree", "Noto Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Gelasio", Georgia, "Times New Roman", serif;
   --font-arabic: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-arabic-display: "Noto Naskh Arabic", "Noto Sans Arabic", serif;
 }
 
 html {
@@ -36,8 +41,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(245, 181, 68, 0.07), transparent 60%),
-    radial-gradient(900px 400px at -10% 10%, rgba(94, 234, 212, 0.05), transparent 60%),
+    radial-gradient(1100px 520px at 50% -12%, rgba(255, 255, 255, 0.06), transparent 62%),
     var(--color-bg);
 }
 
@@ -88,10 +92,10 @@ body {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-accent text-accent-ink hover:bg-[#ffc865];
+  @apply btn bg-accent text-accent-ink hover:bg-[#d9d9d9];
 }
 @utility btn-secondary {
-  @apply btn border border-line bg-surface-2 text-ink hover:bg-surface-3;
+  @apply btn border border-line bg-[#0d0d0d] text-ink hover:border-[#5a5a5a] hover:bg-[#1c1c1c];
 }
 @utility btn-ghost {
   @apply btn text-muted hover:bg-surface-2 hover:text-ink;
@@ -111,6 +115,14 @@ body {
 @utility hint {
   @apply text-xs text-muted;
 }
+/* The white rounded panels of the presentation (slides 3, 5, 6…), used for a few hero blocks. */
+@utility panel-paper {
+  @apply rounded-[28px] bg-paper text-paper-ink shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8)];
+}
+/* Black pill, like "Par : Mojo-Jojo" on the cover slide. */
+@utility pill {
+  @apply inline-flex items-center gap-2 rounded-2xl bg-black px-5 py-2 text-ink;
+}
 @utility kbd {
   @apply rounded-md border border-line bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-ink;
 }
@@ -122,4 +134,30 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* A strip of film: black band with sprocket holes, top and bottom. Purely decorative. */
+.film-strip {
+  height: 16px;
+  background-color: #0b0b0b;
+  background-image:
+    linear-gradient(90deg, #d8d8d8 0 9px, transparent 9px),
+    linear-gradient(90deg, #d8d8d8 0 9px, transparent 9px);
+  background-size: 22px 4px, 22px 4px;
+  background-position: 6px 2px, 6px calc(100% - 2px);
+  background-repeat: repeat-x;
+}
+
+/* The light film strips of the presentation: black sprocket holes and dark frames on pale film. */
+.film-strip-photo {
+  height: 42px;
+  border-block: 2px solid #0b0b0b;
+  background-color: #e2e2e2;
+  background-image:
+    linear-gradient(90deg, #0b0b0b 0 8px, transparent 8px),
+    linear-gradient(90deg, #0b0b0b 0 8px, transparent 8px),
+    linear-gradient(90deg, #2f2f2f 0 34px, transparent 34px);
+  background-size: 16px 5px, 16px 5px, 44px 20px;
+  background-position: 4px 3px, 4px calc(100% - 3px), 5px 9px;
+  background-repeat: repeat-x;
 }

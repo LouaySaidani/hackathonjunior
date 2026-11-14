@@ -13,7 +13,7 @@ type Filter = "all" | "review" | "pending";
 
 function readValidator(): string {
   try {
-    return localStorage.getItem("basira.validator") || "";
+    return localStorage.getItem("wasf.validator") || localStorage.getItem("basira.validator") || "";
   } catch {
     return "";
   }
@@ -184,7 +184,7 @@ export default function Editor() {
   const saveValidator = (v: string) => {
     setValidator(v);
     try {
-      localStorage.setItem("basira.validator", v);
+      localStorage.setItem("wasf.validator", v);
     } catch {
       /* ignore */
     }
@@ -272,7 +272,7 @@ export default function Editor() {
             <video ref={videoRef} src={project.video_url} controls preload="metadata" className="aspect-video w-full rounded-xl bg-black" />
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={previewAd} onChange={(e) => setPreviewAd(e.target.checked)} className="h-4 w-4 accent-[#f5b544]" />
+                <input type="checkbox" checked={previewAd} onChange={(e) => setPreviewAd(e.target.checked)} className="h-4 w-4 accent-[#f4f4f4]" />
                 <Volume2 size={15} aria-hidden="true" /> {t("previewAd")}
               </label>
               <span className="ml-auto font-mono text-sm tabular-nums text-muted" aria-hidden="true">
