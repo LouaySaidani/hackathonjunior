@@ -38,7 +38,7 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
   { d, index, active, validator, slot, onActivate, onChange, onDelete, onPlay, registerActions },
   ref,
 ) {
-  const { t, lang: uiLang } = useT();
+  const { t } = useT();
   const uid = useId();
   const [text, setText] = useState(d.text);
   const [start, setStart] = useState(d.start.toFixed(2));
@@ -124,7 +124,7 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
     return () => registerActions(null);
   });
 
-  const date = d.validated_at ? new Date(d.validated_at).toLocaleString(uiLang === "fr" ? "fr-FR" : "en-GB") : "";
+  const date = d.validated_at ? new Date(d.validated_at).toLocaleString("fr-FR") : "";
   const headingId = `${uid}-h`;
   const border = {
     ai_draft: "border-l-ai",
@@ -333,7 +333,7 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
           <ol className="mt-2 space-y-1">
             {d.history.map((h, i) => (
               <li key={i}>
-                <span className="font-mono">{new Date(h.at).toLocaleString(uiLang === "fr" ? "fr-FR" : "en-GB")}</span> — {h.action}
+                <span className="font-mono">{new Date(h.at).toLocaleString("fr-FR")}</span> — {h.action}
                 {h.by && ` · ${h.by}`}
                 {h.detail && ` · ${h.detail}`}
               </li>

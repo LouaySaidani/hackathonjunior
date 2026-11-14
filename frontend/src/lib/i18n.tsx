@@ -1,6 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-
-export type UiLang = "fr" | "en";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 
 const dict = {
   fr: {
@@ -10,15 +8,13 @@ const dict = {
     navDashboard: "Tableau de bord",
     navNew: "Nouveau projet",
     navFeedback: "Retours testeurs",
-    switchLang: "English",
-    switchLangLabel: "Passer l'interface en anglais",
     demoBanner: "DEMO MODE",
     demoBannerText:
       "Aucune clé d'API configurée : la compréhension visuelle et la rédaction sont SIMULÉES (données d'exemple). La transcription, la détection des silences, la voix et le mixage sont réels.",
     // dashboard
     welcome: "Rendre le patrimoine audiovisuel tunisien accessible",
-    welcomeSub:
-      "Wasf prépare des brouillons d'audiodescription à partir des silences d'un film. Un·e audiodescripteur·rice humain·e corrige et valide chaque ligne ; des relecteur·rice·s aveugles évaluent le résultat.",
+    welcomeLead: "Rendre le cinéma visible à ceux qui ne le voient pas.",
+    welcomeSub: "Wasf glisse une description dans chaque silence du film : l'IA propose, vous gardez la plume.",
     createProject: "Créer un projet",
     trySample: "Essayer le clip d'exemple",
     recentProjects: "Projets récents",
@@ -229,265 +225,27 @@ const dict = {
     lang_en: "Anglais",
     ethicsNote: "L'IA assiste, l'humain décide : aucune ligne n'est jamais validée automatiquement.",
   },
-  en: {
-    skip: "Skip to main content",
-    appTagline: "AI describes. Humans validate.",
-    teamCredit: "Team Mojo-Jojo",
-    navDashboard: "Dashboard",
-    navNew: "New project",
-    navFeedback: "Tester feedback",
-    switchLang: "Français",
-    switchLangLabel: "Switch interface to French",
-    demoBanner: "DEMO MODE",
-    demoBannerText:
-      "No API key configured: visual understanding and drafting are SIMULATED (sample data). Transcription, silence detection, voice and mixing are real.",
-    welcome: "Making Tunisian audiovisual heritage accessible",
-    welcomeSub:
-      "Wasf drafts audio description from a film's silences. A human describer edits and validates every line; blind proofreaders evaluate the result.",
-    createProject: "Create a project",
-    trySample: "Try the sample clip",
-    recentProjects: "Recent projects",
-    noProjects: "No projects yet.",
-    statProjects: "Projects",
-    statValidated: "Validated lines",
-    statPending: "Lines to review",
-    statFeedback: "Tester feedback",
-    open: "Open",
-    analysis: "Analysis",
-    editor: "Editor",
-    exportQa: "Export",
-    delete: "Delete",
-    confirmDelete: "Permanently delete this project and its files?",
-    sample: "Sample",
-    validatedOf: "{a}/{b} lines validated",
-    status_uploaded: "Uploaded",
-    status_analyzing: "Analyzing",
-    status_analyzed: "Analyzed",
-    status_ready: "Ready to edit",
-    status_error: "Error",
-    newTitle: "New project",
-    newSub: "Upload an excerpt you hold the rights to. Only the audio track, silences and a few keyframes are analyzed.",
-    fileLabel: "Video (MP4, MOV or MKV)",
-    fileHint: "Drag and drop a file or click to browse. Max size: {mb} MB.",
-    chooseFile: "Choose a video",
-    badType: "Unsupported format: use MP4, MOV or MKV.",
-    tooBig: "File too large.",
-    metadata: "Metadata",
-    duration: "Duration",
-    resolution: "Resolution",
-    size: "Size",
-    type: "Type",
-    titleLabel: "Project title",
-    adLanguage: "Audio description language",
-    dialogueLanguage: "Dialogue language (transcription hint)",
-    auto: "Auto-detect",
-    castTitle: "Cast (optional)",
-    castHint: "Characters are only named from this list. No facial recognition is used.",
-    castName: "Character name",
-    castDesc: "Short visual description",
-    addCast: "Add a character",
-    removeCast: "Remove {name}",
-    consent: "I own this video or have permission to process it.",
-    consentRequired: "Consent is required.",
-    optIn: "I allow this content to be used to improve models (off by default — not used in this MVP).",
-    startAnalysis: "Upload and start analysis",
-    uploading: "Uploading… {p}%",
-    analysisTitle: "Analysis workspace",
-    jobStatus: "Analysis status",
-    rerun: "Re-run analysis",
-    launch: "Start analysis",
-    openEditor: "Open editor",
-    transcript: "Timestamped transcript",
-    noTranscript: "No dialogue transcribed.",
-    silences: "Available silences",
-    gapsCount: "{n} intervals ≥ {min} s",
-    keyframes: "Analyzed keyframes",
-    keyframesHint: "Only a few frames per silence are extracted, to save compute.",
-    sceneChange: "Scene change",
-    timeline: "Timeline: dialogue and silences",
-    speechLegend: "Dialogue",
-    gapLegend: "Usable silence",
-    gapSkippedLegend: "Lower-priority silence (ML)",
-    gapRecommended: "Prioritised",
-    gapSkipped: "Not prioritised",
-    gapScore: "relevance {p}%",
-    draftHere: "Draft here",
-    mlSummary: "ML model: {k} of {n} silences selected for a draft (threshold {thr}%). You can still draft in the others.",
-    mlInactive: "No ML model used: every silence gets a draft.",
-    mlTested: "Model tested on {v} unseen videos: precision {p}%, recall {r}% against human audio describers.",
-    adLegend: "Audio description",
-    legend_ai_draft: "AI draft",
-    legend_edited: "edited",
-    legend_validated: "validated",
-    legend_rejected: "rejected",
-    step_audio: "Audio extraction",
-    step_vad: "Speech detection",
-    step_asr: "Transcription",
-    step_gaps: "Silence computation",
-    step_scenes: "Scene changes",
-    step_ml: "Silence ranking (ML)",
-    step_keyframes: "Keyframes",
-    step_drafts: "AI drafts",
-    providers: "Models used",
-    seekTo: "Go to {t}",
-    editorTitle: "Audio description editor",
-    validator: "Your name (validator)",
-    validatorHint: "Required to validate: it will appear in the credits.",
-    progressValidated: "{a}/{b} lines validated",
-    addManual: "Add a description at {t}",
-    shortcuts: "Keyboard shortcuts",
-    sc_next: "Next / previous line",
-    sc_validate: "Validate active line",
-    sc_reject: "Reject active line",
-    sc_play: "Play active segment",
-    sc_save: "Save text",
-    sc_help: "Show help",
-    sc_note: "Outside text fields, or with Alt from a field.",
-    st_ai_draft: "AI DRAFT",
-    st_edited: "EDITED BY HUMAN",
-    st_validated: "HUMAN VALIDATED",
-    st_rejected: "REJECTED",
-    validatedBy: "Validated by {name} on {date}",
-    flag_low_confidence: "Low confidence — human review required",
-    flag_trimmed_to_fit: "Shortened to fit the silence",
-    flag_too_long: "Too long for the interval",
-    flag_uncertain: "Uncertain elements reported by the model",
-    flag_demo: "Generated in DEMO MODE (simulated)",
-    needsReview: "Needs review",
-    start: "Start (s)",
-    end: "End (s)",
-    language: "Language",
-    text: "Description text",
-    estimate: "Estimated {est} s / {slot} s available",
-    save: "Save",
-    saved: "Saved",
-    validate: "Validate",
-    reject: "Reject",
-    reopen: "Reopen",
-    regenerate: "Regenerate",
-    regenHint: "Instruction for the new proposal (optional)",
-    playSegment: "Play segment",
-    deleteLine: "Delete line",
-    confirmDeleteLine: "Delete this description?",
-    voice: "Voice",
-    genVoice: "Generate voice",
-    voiceOnlyValidated: "Voice is generated only for validated lines.",
-    removeAudio: "Remove audio",
-    audioSource_tts: "Text-to-speech",
-    audioSource_demo_tone: "Placeholder tone (demo)",
-    confidence: "Confidence",
-    history: "History",
-    origin_ai: "Origin: AI",
-    origin_human: "Origin: human",
-    noDescriptions: "No descriptions. Run the analysis or add a line manually.",
-    needValidator: "Enter your name before validating.",
-    tooLongHelp: "Too long for this silence: {n} words at most before the next dialogue. Shorten the text by hand or with AI.",
-    shortenAI: "Shorten with AI",
-    shortenHint: "Shorten this description to at most {n} words, keeping the essential visual information.",
-    rerunConfirm: "Re-running the analysis will erase {n} line(s) validated or edited by a human, and every other description. Continue?",
-    rerunGo: "Yes, re-run everything",
-    rerunCancel: "Cancel",
-    validateAll: "Validate all ({n})",
-    validateAllConfirm: "Validate {n} line(s) as {name}?",
-    validateAllReview: "Including {n} marked “needs review”: check them before confirming.",
-    validateAllHint: "Each line will be recorded as validated by you, with “bulk validation” in its history. Rejected lines are left unchanged.",
-    validateAllGo: "Yes, validate all",
-    validateAllCancel: "Cancel",
-    validateAllDone: "{n} line(s) validated.",
-    validateAllBlocked: "{n} line(s) too long for their silence were not validated: shorten them.",
-    previewAd: "Preview with audio description",
-    activeLine: "Active line",
-    filterAll: "All",
-    filterReview: "Needs review",
-    filterPending: "Not validated",
-    exportTitle: "Export and quality review",
-    humanValidation: "Human validation",
-    accessSummary: "Accessibility summary",
-    voiceCoverage: "{a}/{b} validated lines have a voice",
-    reviewLeft: "{n} line(s) flagged for review",
-    genAllVoices: "Generate voices for validated lines",
-    runExport: "Generate export",
-    exportOnlyValidated: "Only human-validated lines are exported.",
-    files: "Generated files",
-    download: "Download",
-    finalPreview: "Final preview",
-    feedbackLink: "Get it evaluated by blind testers",
-    nothingValidated: "No validated line: validate at least one description in the editor.",
-    exportDone: "Export complete.",
-    fbTitle: "Feedback from blind and visually impaired testers",
-    fbSub: "Proofreaders are paid and involved in evaluation (ATAA model). The choice between MSA and darija is theirs.",
-    fbProject: "Evaluated project",
-    fbNone: "No specific project",
-    fbAlias: "Alias (optional)",
-    fbComprehension: "Understanding of the work (1 = very poor, 5 = excellent)",
-    fbPref: "Preferred audio description language",
-    pref_msa: "Modern Standard Arabic (فصحى)",
-    pref_darija: "Tunisian darija (تونسي)",
-    pref_fr: "French",
-    pref_no_preference: "No preference",
-    fbComment: "Free comment",
-    fbPaid: "I am paid for this review",
-    fbConsent: "I agree that this feedback is stored locally to improve audio description.",
-    fbSubmit: "Send feedback",
-    fbThanks: "Thank you! Your feedback has been saved.",
-    fbSummary: "Summary",
-    fbCount: "{n} response(s)",
-    fbMean: "Mean comprehension",
-    fbPrefs: "Language preferences",
-    loading: "Loading…",
-    error: "Error",
-    retry: "Retry",
-    back: "Back",
-    close: "Close",
-    seconds: "s",
-    notFound: "Page not found.",
-    lang_fr: "French",
-    lang_ar: "Modern Standard Arabic (العربية)",
-    lang_aeb: "Tunisian darija (تونسي)",
-    lang_en: "English",
-    ethicsNote: "AI assists, humans decide: no line is ever validated automatically.",
-  },
 } as const;
 
 export type Key = keyof (typeof dict)["fr"];
 
+// The interface is in French only.
 interface Ctx {
-  lang: UiLang;
-  setLang: (l: UiLang) => void;
   t: (k: Key, vars?: Record<string, string | number>) => string;
 }
 
 const I18nCtx = createContext<Ctx | null>(null);
 
-function initial(): UiLang {
-  try {
-    const v = localStorage.getItem("wasf.lang") || localStorage.getItem("basira.lang");
-    if (v === "fr" || v === "en") return v;
-  } catch {
-    /* storage unavailable */
-  }
-  return "fr";
-}
-
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<UiLang>(initial);
   useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
-  const setLang = (l: UiLang) => {
-    setLangState(l);
-    try {
-      localStorage.setItem("wasf.lang", l);
-    } catch {
-      /* ignore */
-    }
-  };
+    document.documentElement.lang = "fr";
+  }, []);
   const t = (k: Key, vars?: Record<string, string | number>) => {
-    let s: string = dict[lang][k] ?? dict.fr[k] ?? k;
+    let s: string = dict.fr[k] ?? k;
     if (vars) for (const [name, v] of Object.entries(vars)) s = s.replace(`{${name}}`, String(v));
     return s;
   };
-  return <I18nCtx.Provider value={{ lang, setLang, t }}>{children}</I18nCtx.Provider>;
+  return <I18nCtx.Provider value={{ t }}>{children}</I18nCtx.Provider>;
 }
 
 export function useT() {

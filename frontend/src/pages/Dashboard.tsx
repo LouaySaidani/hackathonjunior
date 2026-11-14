@@ -8,7 +8,7 @@ import { useT, type Key } from "../lib/i18n";
 import { useTitle } from "../lib/useTitle";
 
 export default function Dashboard() {
-  const { t, lang } = useT();
+  const { t } = useT();
   useTitle(t("navDashboard"));
   const nav = useNavigate();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
@@ -79,7 +79,8 @@ export default function Dashboard() {
             </span>
           </h1>
           <p className="pill mt-6 font-display text-xl md:text-2xl">{t("appTagline")}</p>
-          <p className="mx-auto mt-6 max-w-2xl text-lg font-light text-muted">{t("welcomeSub")}</p>
+          <p className="mx-auto mt-8 max-w-3xl text-balance font-display text-2xl md:text-3xl">{t("welcomeLead")}</p>
+          <p className="mx-auto mt-3 max-w-2xl text-balance text-lg font-light text-muted">{t("welcomeSub")}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to="/new" className="btn-primary !px-5 !py-2.5 text-base">
               <Plus size={18} aria-hidden="true" /> {t("createProject")}
@@ -124,7 +125,7 @@ export default function Dashboard() {
                     </h3>
                     <p className="mt-1 text-sm text-muted">
                       {fmtTime(p.duration)} · {t(`lang_${p.language}` as Key)} ·{" "}
-                      {new Date(p.created_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB")}
+                      {new Date(p.created_at).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">

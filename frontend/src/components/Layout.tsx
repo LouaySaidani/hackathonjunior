@@ -1,4 +1,4 @@
-import { FlaskConical, Languages, LayoutDashboard, MessageSquareHeart, Plus } from "lucide-react";
+import { FlaskConical, LayoutDashboard, MessageSquareHeart, Plus } from "lucide-react";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { api, type SystemInfo } from "../lib/api";
@@ -44,7 +44,7 @@ function NavItem({ to, icon, children, end }: { to: string; icon: ReactNode; chi
 }
 
 export default function Layout() {
-  const { t, lang, setLang } = useT();
+  const { t } = useT();
   const [system, setSystem] = useState<SystemInfo | null>(null);
   useEffect(() => {
     api.system().then(setSystem).catch(() => setSystem(null));
@@ -93,15 +93,6 @@ export default function Layout() {
               {t("navFeedback")}
             </NavItem>
           </nav>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-            title={t("switchLangLabel")}
-          >
-            <Languages size={16} aria-hidden="true" />
-            <span lang={lang === "fr" ? "en" : "fr"}>{t("switchLang")}</span>
-          </button>
         </div>
         <FilmStrip />
       </header>

@@ -104,7 +104,7 @@ Licence CC-BY : vous pouvez les montrer en public en citant l'œuvre et la Blend
 
 ```mermaid
 flowchart LR
-  UI["React + TS + Tailwind<br/>(FR/EN, RTL, WCAG)"] -- REST --> API["FastAPI<br/>+ file de tâches en mémoire"]
+  UI["React + TS + Tailwind<br/>(français, RTL, WCAG)"] -- REST --> API["FastAPI<br/>+ file de tâches en mémoire"]
   API --> FF["FFmpeg<br/>audio · scènes · images clés · mixage"]
   API --> VAD["Silero VAD<br/>(repli webrtcvad)"]
   API --> ASR["ASR : faster-whisper | demo"]
@@ -200,7 +200,7 @@ Détails : [docs/ethics.md](docs/ethics.md) · Plan de validation : [docs/valida
 - ✅ Mixage avec atténuation de la bande originale, MP4 à 2 pistes, export AD MP3/WAV, WebVTT, TTML, crédits, script pour l'ayant droit, ZIP
 - ✅ Tableau de bord, historique des projets, statistiques, suivi de progression des tâches (live regions ARIA)
 - ✅ Page de retours des testeurs aveugles, avec synthèse
-- ✅ Interface en français par défaut, bascule en anglais, arabe en RTL
+- ✅ Interface en français, textes arabes affichés de droite à gauche (RTL)
 - ✅ Accessibilité : HTML sémantique, lien d'évitement, focus visible, contrastes AA, **Lighthouse a11y = 100 sur les 6 pages**
 - ✅ Docker multi-étapes (non-root, HEALTHCHECK), compose, CI GitHub Actions, image GHCR amd64 + arm64
 
@@ -300,9 +300,3 @@ cd ../frontend && npm run build
 ## Remerciements
 
 À l'Organisation internationale de la Francophonie et à la JEI pour le hackathon ; aux associations de personnes aveugles et malvoyantes et aux audiodescripteur·rice·s, dont le travail inspire cet outil ; aux communautés open source de FFmpeg, faster-whisper, Silero, espeak-ng et edge-tts.
-
----
-
-## English summary
-
-**Wasf** is a human-in-the-loop **AI audio description co-pilot** for Tunisian and Francophone films. It finds silent gaps (FFmpeg + Silero VAD + faster-whisper), extracts only 1–3 keyframes per gap, and asks a vision-language model (Gemini, any OpenAI-compatible endpoint, or a clearly-labelled DEMO provider) for short drafts in **French, Modern Standard Arabic or Tunisian darija**. A human describer edits, re-times, regenerates, **validates (by name, line by line or all at once) or rejects every line**; nothing is ever auto-validated and only validated lines are voiced and exported. Long silences are split into ~10 s slots, and a **scikit-learn model trained on human audio descriptions** (QuerYD/YouDescribe, 17 training / 13 unseen test videos, full report in `ml/reports/`) scores each slot; the human can still draft anywhere. Voice comes from edge-tts/espeak-ng. Exports: ducked MP4, AD track, WebVTT (kind=descriptions, RTL-aware), TTML, credits and a script delivered to the rights holder. Includes a blind-tester feedback page, FR/EN UI, Lighthouse accessibility 100, Docker image (`docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest`) and CI. Without API keys it runs in an explicit **DEMO MODE**.
