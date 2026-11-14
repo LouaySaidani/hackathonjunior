@@ -27,13 +27,23 @@ Basira divise le travail d'audiodescription en étapes que l'IA accélère, sans
 
 **Aucune ligne n'est validée automatiquement.** Chaque ligne issue de l'IA reste étiquetée comme telle jusqu'à sa validation par une personne nommée.
 
-![Éditeur d'audiodescription : vidéo, frise dialogues/silences, cartes de description avec statuts](docs/img/editor.png)
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/img/analysis.png" alt="Espace d'analyse : vidéo, frise dialogues/silences/audiodescription, étapes de l'analyse, transcription Whisper, images clés et score de pertinence ML de chaque créneau"></td>
+<td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 4/17, cartes de description avec les états Validé par un humain et Modifié par un humain, voix générée"></td>
+</tr>
+<tr>
+<td><b>Analyse</b> : Whisper transcrit les dialogues, Basira trouve les silences et les découpe en créneaux, le modèle ML donne à chaque créneau un score de pertinence, puis Gemini rédige à partir des images clés.</td>
+<td><b>Éditeur</b> : chaque brouillon est relu, corrigé, recalé, puis <b>validé par une personne nommée</b>. Seules les lignes validées sont vocalisées et mixées dans le film.</td>
+</tr>
+</table>
+
+<sub>Captures réelles sur un extrait de <i>Tears of Steel</i> (© Blender Foundation, CC-BY 3.0, mango.blender.org) : 17 brouillons rédigés par <code>gemini-3.5-flash-lite</code> en 2 requêtes, 4 lignes validées et vocalisées.</sub>
 
 <details>
-<summary>Autres écrans : tableau de bord, analyse, export</summary>
+<summary>Autres écrans : tableau de bord, export</summary>
 
 ![Tableau de bord](docs/img/dashboard.png)
-![Espace d'analyse](docs/img/analysis.png)
 ![Export et contrôle qualité](docs/img/export.png)
 
 </details>
@@ -58,7 +68,31 @@ Ensuite : **Tableau de bord → « Essayer le clip d'exemple » → Lancer l'ana
 > Au premier lancement de l'analyse, le modèle Whisper `small` (~460 Mo) est téléchargé une seule fois dans le volume `/models`.
 > Sans accès réseau, l'application bascule sur la transcription de démonstration et le signale.
 
-Pour utiliser un vrai modèle de vision, copiez `.env.example` en `.env` et renseignez `GEMINI_API_KEY`, ou `OPENAI_API_KEY` avec `OPENAI_BASE_URL` pour tout serveur compatible OpenAI (vLLM, Ollama…).
+Pour utiliser un vrai modèle de vision, copiez `.env.example` en `.env` et renseignez `GEMINI_API_KEY` ([clé gratuite sur Google AI Studio](https://aistudio.google.com/apikey)), ou `OPENAI_API_KEY` avec `OPENAI_BASE_URL` pour tout serveur compatible OpenAI (vLLM, Ollama…). Relancez ensuite `docker compose up --build`.
+
+> **Quota gratuit Gemini** : environ 20 requêtes par jour et par modèle. Basira décrit 8 créneaux par requête (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota est épuisé.
+
+### Parcours complet : de la vidéo au film audiodécrit
+
+1. **Nouveau projet** : importez la vidéo, cochez le consentement, choisissez la langue de description.
+2. **Analyse → Lancer l'analyse** : silences, créneaux, scores ML et brouillons Gemini (de 30 s à 2 min).
+3. **Éditeur** : indiquez votre nom, relisez chaque ligne et cliquez **Valider** (raccourcis **J/K** pour naviguer, **V** pour valider, **X** pour rejeter). Un brouillon non validé reste muet.
+4. **Export → Générer les voix des lignes validées → Générer l'export**, puis téléchargez `film_audiodecrit.mp4`.
+
+### Vidéos pour tester
+
+```bash
+bash scripts/get_test_videos.sh     # 4 extraits de films libres de la Blender Foundation (CC-BY) dans videos_test/
+```
+
+| Vidéo | Durée | Intérêt |
+|---|---|---|
+| `05_sintel_bande_annonce.mp4` | 52 s | premier essai, environ 1 requête Gemini |
+| `04_caminandes_llama_drama.mp4` | 1 min 30 | animation comique sans dialogue |
+| `01_tears_of_steel_dialogue.mp4` | 2 min 30 | prises de vue réelles, dialogues et silences (celle des captures) |
+| `03_spring_sans_dialogue.mp4` | 2 min 30 | aucun dialogue : découpage en créneaux de 10 s |
+
+Licence CC-BY : vous pouvez les montrer en public en citant l'œuvre et la Blender Foundation (crédits dans `videos_test/CREDITS.md`). Pour comparer avec de **vraies audiodescriptions humaines**, utilisez les 13 vidéos de test QuerYD téléchargées par `python ml/run_all.py` (voir [ml/README.md](ml/README.md)).
 
 ## Architecture
 
@@ -176,6 +210,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `WHISPER_DEVICE` / `WHISPER_COMPUTE_TYPE` | `cpu` / `int8` | `cuda` / `float16` sur GPU (`docker-compose.gpu.yml`) |
 | `VLM_PROVIDER` | `auto` | `gemini` · `openai` · `demo` · `auto` (selon les clés présentes) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | — / `gemini-3.6-flash` | Fournisseur Gemini |
+| `GEMINI_FALLBACK_MODELS` / `VLM_BATCH_SIZE` | `gemini-3.5-flash-lite,gemini-flash-lite-latest` / `8` | Modèles de secours quand le quota du jour est épuisé ; créneaux décrits par requête |
 | `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL` | — / OpenAI / `gpt-4o-mini` | Tout serveur compatible OpenAI |
 | `TTS_PROVIDER` | `auto` | `edge` → `espeak` → `demo` |
 | `TTS_VOICE_FR` / `_AR` / `_EN` | Denise / Reem (ar-TN) / Sonia | Voix |
@@ -205,7 +240,7 @@ Raccourcis : `make install`, `make backend`, `make frontend`, `make test`, `make
 ## Tests
 
 ```bash
-cd backend && pytest -q        # 26 tests : silences/VAD réel, découpage en créneaux, ajustement, VTT/TTML/crédits, fournisseurs (HTTP simulé), variables et sélection ML, parcours API complet
+cd backend && pytest -q        # 32 tests : silences/VAD réel, découpage en créneaux, ajustement, VTT/TTML/crédits, fournisseurs (HTTP simulé), quota Gemini et requêtes groupées, variables et sélection ML, parcours API complet
 ruff check .                   # lint
 cd ../frontend && npm run build
 ```
@@ -224,7 +259,7 @@ cd ../frontend && npm run build
 ## Limites honnêtes
 
 - **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour le clip d'exemple, elle renvoie un script de référence écrit à la main ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
-- **Gemini** a été testé avec une vraie clé (`gemini-3.6-flash`). Sous forte demande, l'API répond lentement (17 à 55 s par requête) ou refuse temporairement ; Basira refait alors jusqu'à 3 tentatives. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
+- **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Basira décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
 - **Modèle ML** : entraîné sur 17 vidéos seulement, avec des descriptions bénévoles en anglais. Il apprend *où* décrire, pas *quoi* ni dans quelle langue, et ne bat pas encore la règle « tout décrire » (voir [les résultats](#apprentissage-automatique--où-décrire-)). Son transfert vers des films tunisiens reste à vérifier.
 - **Darija** : Whisper générique transcrit mal la darija et l'alternance arabe/français ; la voix `ar-TN` lit le darija de façon approximative. D'où l'enregistrement de voix humaine et le fine-tuning prévu.

@@ -14,3 +14,6 @@ frontend/dist/
 
 # ML: downloaded videos, metadata and features (never committed)
 ml/data/
+
+# Test videos (Blender open movies, CC-BY) - large, not committed
+videos_test/
