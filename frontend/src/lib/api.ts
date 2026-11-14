@@ -157,7 +157,8 @@ export const api = {
   patchProject: (id: string, body: Partial<{ title: string; language: Lang; validator_name: string; cast: CastMember[] }>) =>
     request<ProjectSummary>(`/api/projects/${id}`, json("PATCH", body)),
   deleteProject: (id: string) => request<void>(`/api/projects/${id}`, { method: "DELETE" }),
-  analyze: (id: string) => request<Job>(`/api/projects/${id}/analyze`, { method: "POST" }),
+  analyze: (id: string, force = false) =>
+    request<Job>(`/api/projects/${id}/analyze${force ? "?force=true" : ""}`, { method: "POST" }),
   job: (id: string) => request<Job>(`/api/jobs/${id}`),
   addDescription: (pid: string, body: { start: number; end: number; text: string; language: Lang; author: string }) =>
     request<Description>(`/api/projects/${pid}/descriptions`, json("POST", body)),

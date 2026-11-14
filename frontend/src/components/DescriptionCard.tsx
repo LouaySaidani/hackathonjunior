@@ -62,6 +62,9 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
   const est = words / wps + 0.3;
   const dur = Number(end) - Number(start);
   const tooLong = est > dur + 0.05;
+  // words that fit before the next dialogue (same rule as the server: 0.25 s margin, 0.3 s breathing room)
+  const maxWords = Math.max(2, Math.floor((slot - 0.25 - 0.3) * wps));
+  const shorten = () => run("regen", () => api.regenerate(d.id, t("shortenHint", { n: maxWords })));
 
   const run = async (name: string, fn: () => Promise<Description | void>, ok?: string) => {
     setBusy(name);
@@ -191,6 +194,14 @@ const DescriptionCard = forwardRef<HTMLElement, Props>(function DescriptionCard(
         {t("estimate", { est: est.toFixed(1), slot: dur.toFixed(1) })}
         {tooLong && ` — ${t("flag_too_long")}`} · max {slot.toFixed(1)} s
       </p>
+      {(tooLong || d.flags.includes("too_long")) && d.status !== "rejected" && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#5b4413] bg-[#241a07] p-3 text-sm text-warn">
+          <span className="flex-1">{t("tooLongHelp", { n: maxWords })}</span>
+          <button type="button" className="btn-secondary !py-1.5" onClick={shorten} disabled={!!busy}>
+            <Sparkles size={15} aria-hidden="true" /> {busy === "regen" ? t("loading") : t("shortenAI")}
+          </button>
+        </div>
+      )}
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <label className="text-xs text-muted">

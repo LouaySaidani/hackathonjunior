@@ -88,6 +88,15 @@ async def _save_upload(upload: UploadFile, dest: Path, max_bytes: int) -> int:
     return size
 
 
+def _make_room(s: Session, p: Project, d: Description) -> None:
+    """A line flagged too long may still fit if the silence after it is free: lengthen it, recompute flags."""
+    if "too_long" not in json.loads(d.flags_json):
+        return
+    if service.extend_to_fit(s, p, d, get_settings().gap_padding_seconds):
+        service.add_history(d, "edited", "", f"fin allongée à {d.end:.2f} s pour tenir le texte")
+    service.compute_flags(d, get_settings().confidence_threshold)
+
+
 def _check_interval(s: Session, p: Project, start: float, end: float) -> None:
     if start < 0 or end > p.duration + 0.01:
         raise HTTPException(422, "L'intervalle sort de la durée de la vidéo.")
@@ -284,10 +293,17 @@ def delete_project(pid: str, s: Session = Depends(get_session)):
 
 
 @router.post("/projects/{pid}/analyze", status_code=202)
-def analyze(pid: str, s: Session = Depends(get_session)):
+def analyze(pid: str, force: bool = False, s: Session = Depends(get_session)):
+    """Re-analysing replaces every description. Lines touched by a human (validated, edited, written by
+    hand) are only discarded with `force=true`, after an explicit confirmation in the interface."""
     p = _project(s, pid)
     if jobs.active_job(pid):
         raise HTTPException(409, "Une tâche est déjà en cours pour ce projet.")
+    human_work = [d for d in s.exec(select(Description).where(Description.project_id == pid)).all()
+                  if d.status in (DescriptionStatus.VALIDATED, DescriptionStatus.EDITED) or d.origin == "human"]
+    if human_work and not force:
+        raise HTTPException(409, f"Relancer l'analyse effacerait {len(human_work)} ligne(s) validée(s) ou modifiée(s) "
+                                 "par un humain. Confirmez pour continuer.")
     if not p.consent:
         raise HTTPException(403, "Consentement manquant")
     return jobs.submit(pid, "analyze", lambda ctx: service.analyze(pid, ctx))
@@ -373,6 +389,9 @@ def patch_description(did: str, body: DescPatch, s: Session = Depends(get_sessio
             raise HTTPException(422, "Langue inconnue")
         d.language = body.language
         changed.append("langue")
+    if changed and body.end is None and ("texte" in changed or "langue" in changed):
+        if service.extend_to_fit(s, p, d, get_settings().gap_padding_seconds):
+            changed.append(f"fin allongée à {d.end:.2f} s")
     if changed:
         # Any human change moves the line to EDITED BY HUMAN and removes a previous validation.
         d.status = DescriptionStatus.EDITED
@@ -404,15 +423,18 @@ def validate_description(did: str, body: ValidateBody, s: Session = Depends(get_
     d = _desc(s, did)
     if not body.validator.strip():
         raise HTTPException(422, "Nom du validateur requis")
+    p = _project(s, d.project_id)
+    _make_room(s, p, d)
     if "too_long" in json.loads(d.flags_json):
-        raise HTTPException(422, "Texte trop long pour l'intervalle : raccourcissez-le ou élargissez l'intervalle.")
+        n = service.max_words_for(s, p, d, get_settings().gap_padding_seconds)
+        raise HTTPException(422, f"Texte trop long pour ce silence : {n} mots maximum avant le dialogue suivant. "
+                                 "Raccourcissez-le (bouton « Raccourcir avec l'IA » ou à la main).")
     d.status = DescriptionStatus.VALIDATED
     d.validated_by = body.validator.strip()
     d.validated_at = utcnow()
     d.needs_review = False
     service.add_history(d, "validated", d.validated_by)
     s.add(d)
-    p = _project(s, d.project_id)
     if not p.validator_name:
         p.validator_name = d.validated_by
         s.add(p)
@@ -439,6 +461,7 @@ def validate_all(pid: str, body: ValidateBody, s: Session = Depends(get_session)
     validated, blocked = 0, []
     now = utcnow()
     for d in pending:
+        _make_room(s, p, d)
         if "too_long" in json.loads(d.flags_json):
             blocked.append(d.id)
             continue
@@ -585,10 +608,11 @@ def download_export(pid: str, name: str):
 
 @router.get("/files/{path:path}")
 def serve_file(path: str):
-    """Serve project media (video with Range support, keyframes, voice clips) from the data dir only."""
-    root = get_settings().data_dir.resolve()
-    f = (root / path).resolve()
-    if root not in f.parents or not f.is_file():
+    """Serve project media (video with Range support, keyframes, voice clips). Only files inside
+    data/projects/ are reachable: the database (data/app.db) and anything else in data/ never are."""
+    st = get_settings()
+    f = (st.data_dir.resolve() / path).resolve()
+    if st.projects_dir.resolve() not in f.parents or not f.is_file():
         raise HTTPException(404, "Fichier introuvable")
     return FileResponse(f)
 

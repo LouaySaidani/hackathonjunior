@@ -51,10 +51,21 @@ export default function Analysis() {
     return () => window.clearInterval(i);
   }, [job, reload]);
 
-  const start = async () => {
+  const [confirmRerun, setConfirmRerun] = useState(false);
+  // lines a human validated, edited or wrote: re-running the analysis would erase them
+  const humanWork = (project?.descriptions ?? []).filter(
+    (d) => d.status === "validated" || d.status === "edited" || d.origin === "human",
+  ).length;
+
+  const start = async (force = false) => {
+    if (humanWork > 0 && !force) {
+      setConfirmRerun(true);
+      return;
+    }
+    setConfirmRerun(false);
     setStartError("");
     try {
-      const j = await api.analyze(project!.id);
+      const j = await api.analyze(project!.id, force);
       setJobId(j.id);
       reload();
     } catch (e) {
@@ -77,7 +88,7 @@ export default function Analysis() {
         subtitle={t("analysisTitle")}
         actions={
           <>
-            <button type="button" className="btn-secondary" onClick={start} disabled={!!running}>
+            <button type="button" className="btn-secondary" onClick={() => start()} disabled={!!running || confirmRerun}>
               <RefreshCw size={16} aria-hidden="true" /> {analyzed || project.status === "error" ? t("rerun") : t("launch")}
             </button>
             <Link to={`/projects/${project.id}/editor`} className="btn-primary">
@@ -86,6 +97,21 @@ export default function Analysis() {
           </>
         }
       />
+      {confirmRerun && (
+        <div role="alertdialog" aria-labelledby="rerun-confirm" className="card mb-6 space-y-3 border-[#5b4413] p-4">
+          <p id="rerun-confirm" className="font-semibold text-warn">
+            {t("rerunConfirm", { n: humanWork })}
+          </p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" className="btn-ghost" onClick={() => setConfirmRerun(false)} autoFocus>
+              {t("rerunCancel")}
+            </button>
+            <button type="button" className="btn-danger" onClick={() => start(true)}>
+              <RefreshCw size={16} aria-hidden="true" /> {t("rerunGo")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
         <div className="space-y-6">
@@ -173,7 +199,7 @@ export default function Analysis() {
               {!running && project.status === "error" && !job && <ErrorBox message={project.error} />}
               {!running && project.status === "uploaded" && (
                 <Notice>
-                  <button type="button" className="btn-primary" onClick={start}>
+                  <button type="button" className="btn-primary" onClick={() => start()}>
                     <Play size={16} aria-hidden="true" /> {t("launch")}
                   </button>
                 </Notice>

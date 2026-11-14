@@ -89,13 +89,45 @@ def available_until(s: Session, project: Project, t: float) -> float:
     return min(nxt) if nxt else project.duration
 
 
+def room_until(s: Session, p: Project, desc: Description, padding: float) -> float:
+    """Latest end a line may reach: before the next dialogue (with its safety margin) and before the
+    next active description."""
+    limit = available_until(s, p, desc.start) - padding
+    nxt = s.exec(select(Description.start).where(
+        Description.project_id == p.id, Description.id != desc.id, Description.start > desc.start + 0.01,
+        Description.status != DescriptionStatus.REJECTED)).all()
+    if nxt:
+        limit = min(limit, min(nxt) - 0.05)
+    return max(limit, desc.end)
+
+
+def extend_to_fit(s: Session, p: Project, desc: Description, padding: float) -> bool:
+    """Lengthen a line that no longer fits (longer text, slower language) into the free silence after it.
+    Returns True if its end moved. Never reaches the next dialogue or the next description."""
+    needed = estimate_seconds(desc.text, desc.language)
+    if needed <= desc.end - desc.start + 0.05:
+        return False
+    new_end = round(min(room_until(s, p, desc, padding), desc.start + needed + 0.1), 3)
+    if new_end <= desc.end:
+        return False
+    desc.end = new_end
+    return True
+
+
+def max_words_for(s: Session, p: Project, desc: Description, padding: float) -> int:
+    """How many words fit between the start of the line and the furthest end it may reach."""
+    return max_words(room_until(s, p, desc, padding) - desc.start, desc.language)
+
+
 def compute_flags(desc: Description, conf_threshold: float) -> None:
     flags = set(json.loads(desc.flags_json or "[]"))
     flags.discard("too_long")
     if estimate_seconds(desc.text, desc.language) > (desc.end - desc.start) + 0.05:
         flags.add("too_long")
     desc.flags_json = json.dumps(sorted(flags))
-    desc.needs_review = bool(flags & {"too_long", "low_confidence", "uncertain"}) and desc.status != DescriptionStatus.VALIDATED
+    # trimmed_to_fit: the model's sentence was cut to fit, it may end abruptly with "…"
+    review_flags = {"too_long", "low_confidence", "uncertain", "trimmed_to_fit"}
+    desc.needs_review = bool(flags & review_flags) and desc.status != DescriptionStatus.VALIDATED
 
 
 # ------------------------------------------------------------------ analysis --------------------------

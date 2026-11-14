@@ -21,7 +21,7 @@ Errors return `{"detail": "<message en français>"}`.
 | GET | `/api/projects/{id}` | Full project: transcript, speech regions, gaps, keyframes, descriptions |
 | PATCH | `/api/projects/{id}` | `title`, `language`, `validator_name`, `cast`, `training_opt_in` |
 | DELETE | `/api/projects/{id}` | Deletes the project and its files |
-| POST | `/api/projects/{id}/analyze` | Starts the analysis job (audio → VAD → ASR → gaps → scenes → keyframes → drafts). 202 + Job. 409 if a job is running |
+| POST | `/api/projects/{id}/analyze` | Starts the analysis job (audio → VAD → ASR → gaps → scenes → keyframes → drafts). 202 + Job. 409 if a job is running, or if lines were validated / edited / written by a human (they would be erased): pass `?force=true` after an explicit confirmation |
 | GET | `/api/jobs/{job_id}` | `status` (`queued`/`running`/`done`/`error`), `progress` 0–1, `step`, `message`, `result` |
 
 ## Descriptions (human-in-the-loop)
@@ -29,9 +29,9 @@ Errors return `{"detail": "<message en français>"}`.
 | Method | Path | Description |
 |---|---|---|
 | POST | `/api/projects/{id}/descriptions` | Manual line `{start, end, text, language, author}` → `origin=human`, `status=edited`. 422 if it overlaps dialogue |
-| PATCH | `/api/descriptions/{id}` | `{text?, start?, end?, language?, editor}`. Any change → `status=edited`, removes validation, recomputes flags. 422 on dialogue overlap |
+| PATCH | `/api/descriptions/{id}` | `{text?, start?, end?, language?, editor}`. Any change → `status=edited`, removes validation, recomputes flags. A longer text (or slower language) lengthens the line into the free silence when `end` is not given. 422 on dialogue overlap |
 | DELETE | `/api/descriptions/{id}` | Delete |
-| POST | `/api/descriptions/{id}/validate` | `{validator}` **required**. Sets `validated`, `validated_by`, `validated_at`. 422 if text is `too_long` |
+| POST | `/api/descriptions/{id}/validate` | `{validator}` **required**. Sets `validated`, `validated_by`, `validated_at`. A `too_long` line is first lengthened into the free silence after it; if it still does not fit, 422 with the maximum number of words |
 | POST | `/api/projects/{id}/validate-all` | `{validator}` **required**. Validates every `ai_draft` / `edited` line at once (history: « validation groupée »). Rejected lines are untouched; `too_long` lines stay blocked and are returned in `blocked`. → `{validated, blocked[]}` |
 | POST | `/api/descriptions/{id}/reject` | `{by, reason}` |
 | POST | `/api/descriptions/{id}/reopen` | Back from `rejected` |
@@ -52,7 +52,7 @@ audio_duration, audio_voice, estimated_seconds`.
 | POST | `/api/projects/{id}/export` | Job: builds `film_audiodecrit.mp4` (AD mix + original track), `ad_track.wav/.mp3`, `description.vtt`, `description.ttml`, `credits.txt`, `script_ayant_droit.json`, `export_complet.zip`. **Validated lines only**; 409 if none |
 | GET | `/api/projects/{id}/export` | List generated files |
 | GET | `/api/projects/{id}/export/{name}` | Download one file |
-| GET | `/api/files/{path}` | Project media (video with HTTP Range, keyframes, voice clips), confined to `DATA_DIR` |
+| GET | `/api/files/{path}` | Project media (video with HTTP Range, keyframes, voice clips), confined to `DATA_DIR/projects/` (the database is never served) |
 
 ## Feedback (blind / visually impaired testers)
 
