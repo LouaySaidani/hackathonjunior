@@ -1,0 +1,10 @@
+{
+  "language": "fr",
+  "note": "Reference transcript of the synthetic sample clip (used only by the DEMO ASR provider).",
+  "segments": [
+    {"start": 3.0, "end": 5.81, "text": "Ahla bik ! Bienvenue à Sidi Bou Saïd."},
+    {"start": 12.0, "end": 14.44, "text": "Le café des Nattes est juste en haut de la rue."},
+    {"start": 21.0, "end": 23.47, "text": "Deux thés à la menthe, s'il vous plaît."},
+    {"start": 30.0, "end": 32.73, "text": "Merci beaucoup. À demain, inchallah."}
+  ]
+}

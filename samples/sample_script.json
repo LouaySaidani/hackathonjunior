@@ -1,0 +1,83 @@
+[
+  {
+    "anchor": 1.4,
+    "confidence": 0.86,
+    "text": {
+      "fr": "Une porte bleue cloutée, mur chaulé.",
+      "ar": "باب أزرق وجدار أبيض.",
+      "aeb": "باب أزرق في حيط أبيض.",
+      "en": "A studded blue door, whitewashed wall."
+    },
+    "alt": {
+      "fr": "Mur blanc, porte bleue et fenêtre bleue.",
+      "ar": "جدار أبيض وباب ونافذة زرقاء.",
+      "aeb": "حيط أبيض، باب وشباك زرق.",
+      "en": "White wall, blue door, blue window."
+    }
+  },
+  {
+    "anchor": 9.0,
+    "confidence": 0.78,
+    "text": {
+      "fr": "Une ruelle ocre au soleil couchant. Une silhouette claire avance vers la droite.",
+      "ar": "زقاق بلون المغرة عند الغروب. شخص يمشي نحو اليمين.",
+      "aeb": "زنقة صفراء وقت المغرب. واحد ماشي لليمين.",
+      "en": "An ochre alley at sunset. A pale figure walks to the right."
+    },
+    "alt": {
+      "fr": "Fondu. Ruelle ocre ; une silhouette traverse le plan de gauche à droite.",
+      "ar": "تلاشٍ. زقاق أصفر يعبره شخص من اليسار إلى اليمين.",
+      "aeb": "زنقة صفراء، واحد يقطعها من اليسار لليمين.",
+      "en": "Fade. Ochre alley; a figure crosses the frame left to right."
+    }
+  },
+  {
+    "anchor": 17.5,
+    "confidence": 0.45,
+    "uncertain": ["Le lieu est supposé être un café d'après le dialogue ; l'image montre seulement une lampe et une table."],
+    "text": {
+      "fr": "La silhouette sort. Café sombre : une lampe jaune éclaire une table vide.",
+      "ar": "يخرج الشخص. مقهى معتم ومصباح أصفر فوق طاولة.",
+      "aeb": "الشخص يخرج. قهوة مظلمة وفنار أصفر فوق طاولة.",
+      "en": "The figure exits. A dark café: a yellow lamp over an empty table."
+    },
+    "alt": {
+      "fr": "Intérieur sombre. Une lampe jaune au plafond, une table en bois.",
+      "ar": "مكان داخلي معتم. مصباح أصفر وطاولة خشبية.",
+      "aeb": "داخل مظلم. فنار أصفر وطاولة عود.",
+      "en": "Dark interior. A yellow ceiling lamp, a wooden table."
+    }
+  },
+  {
+    "anchor": 26.5,
+    "confidence": 0.82,
+    "text": {
+      "fr": "Deux verres de thé sont posés sur la table. Fondu au noir.",
+      "ar": "كأسا شاي على الطاولة. تلاشٍ إلى السواد.",
+      "aeb": "زوز كيسان تاي على الطاولة. تظلام شوية بشوية.",
+      "en": "Two glasses of tea sit on the table. Fade to black."
+    },
+    "alt": {
+      "fr": "Sur la table, deux verres de thé. L'image s'assombrit.",
+      "ar": "على الطاولة كأسان من الشاي. تُظلم الصورة.",
+      "aeb": "على الطاولة زوز كيسان تاي. التصويرة تظلام.",
+      "en": "Two tea glasses on the table. The image darkens."
+    }
+  },
+  {
+    "anchor": 34.5,
+    "confidence": 0.88,
+    "text": {
+      "fr": "Nuit étoilée sur les toits.",
+      "ar": "ليل مرصّع بالنجوم فوق الأسطح.",
+      "aeb": "الليل والنجوم فوق السطوح.",
+      "en": "A starry night over the rooftops."
+    },
+    "alt": {
+      "fr": "Ciel de nuit, toits en ombre.",
+      "ar": "سماء الليل وأسطح مظلمة.",
+      "aeb": "سما الليل وسطوح مظلمة.",
+      "en": "Night sky, rooftops in shadow."
+    }
+  }
+]
