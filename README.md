@@ -5,7 +5,6 @@
 **Des brouillons d'audiodescription générés dans les silences des films tunisiens et francophones, relus et validés ligne par ligne par un·e audiodescripteur·rice humain·e.**
 
 [![CI](https://github.com/LouaySaidani/hackathonjunior/actions/workflows/ci.yml/badge.svg)](https://github.com/LouaySaidani/hackathonjunior/actions/workflows/ci.yml)
-[![Docker](https://github.com/LouaySaidani/hackathonjunior/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/LouaySaidani/hackathonjunior/pkgs/container/hackathonjunior)
 [![Licence Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 ![Accessibilité Lighthouse 100](https://img.shields.io/badge/Lighthouse%20a11y-100-brightgreen)
 
@@ -52,29 +51,94 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 
 </details>
 
-## Démo rapide
+## Installation et lancement
 
-Prérequis : Docker. **Aucune clé d'API nécessaire** : l'application démarre en **DEMO MODE** (bannière visible), avec le clip d'exemple déjà chargé.
+Wasf s'installe et se lance sur votre ordinateur. Comptez **15 à 20 minutes** la première fois, avec une connexion Internet.
 
-```bash
-docker run -p 8000:8000 ghcr.io/louaysaidani/hackathonjunior:latest
+### 1. Installer les outils (une seule fois)
+
+| Outil | Version | Rôle | Vérification |
+|---|---|---|---|
+| **Git** | récente | récupérer le code | `git --version` |
+| **Python** | **3.11** | serveur et pipeline d'IA | `py -3.11 --version` (Windows) ou `python3.11 --version` |
+| **Node.js** | **22 ou plus** | construire l'interface web | `node --version` |
+| **FFmpeg** | récente | audio, images clés, mixage | `ffmpeg -version` |
+| espeak-ng | *facultatif* | voix de secours sans Internet | `espeak-ng --version` |
+
+**Windows** (PowerShell) :
+
+```powershell
+winget install -e --id Git.Git
+winget install -e --id Python.Python.3.11
+winget install -e --id OpenJS.NodeJS.LTS
+winget install -e --id Gyan.FFmpeg
 ```
 
-ou, depuis un clone (données persistées dans `./data`, modèles mis en cache dans un volume) :
+**Fermez puis rouvrez PowerShell** pour que les nouveaux outils soient trouvés, puis vérifiez avec les commandes de la dernière colonne.
 
-```bash
-git clone https://github.com/LouaySaidani/hackathonjunior.git && cd hackathonjunior
-docker compose up            # → http://localhost:8000
+**Linux** (Debian/Ubuntu) : `sudo apt install git python3.11 python3.11-venv nodejs npm ffmpeg espeak-ng`. **macOS** (Homebrew) : `brew install git python@3.11 node ffmpeg espeak-ng`.
+
+### 2. Récupérer le code
+
+```powershell
+git clone https://github.com/LouaySaidani/hackathonjunior.git
+cd hackathonjunior
 ```
 
-Ensuite : **Tableau de bord → « Essayer le clip d'exemple » → Lancer l'analyse → Éditeur → Valider → Export**.
+> Le dépôt est privé : il faut avoir été invité sur GitHub.
 
-> Au premier lancement de l'analyse, le modèle Whisper `small` (~460 Mo) est téléchargé une seule fois dans le volume `/models`.
-> Sans accès réseau, l'application bascule sur la transcription de démonstration et le signale.
+### 3. Installer les dépendances Python
 
-Pour utiliser un vrai modèle de vision, copiez `.env.example` en `.env` et renseignez `GEMINI_API_KEY` ([clé gratuite sur Google AI Studio](https://aistudio.google.com/apikey)), ou `OPENAI_API_KEY` avec `OPENAI_BASE_URL` pour tout serveur compatible OpenAI (vLLM, Ollama…). Relancez ensuite `docker compose up --build`.
+```powershell
+py -3.11 -m venv .venv                                       # Linux/macOS : python3.11 -m venv .venv
+.venv\Scripts\python -m pip install --upgrade pip              # Linux/macOS : .venv/bin/python …
+.venv\Scripts\python -m pip install -r backendequirements.txt
+```
+
+### 4. Construire l'interface web
+
+```powershell
+cd frontend
+npm ci
+npm run build
+cd ..
+```
+
+> Un avertissement `npm warn install-scripts … esbuild` peut s'afficher : il est sans conséquence.
+
+### 5. Configurer (facultatif)
+
+```powershell
+copy .env.example .env                                       # Linux/macOS : cp .env.example .env
+```
+
+Sans clé, Wasf démarre en **DEMO MODE** (bannière visible) : la vidéo d'exemple reçoit des descriptions préparées à l'avance et relues par un humain. Pour de vraies descriptions, ouvrez `.env` et renseignez `GEMINI_API_KEY` ([clé gratuite sur Google AI Studio](https://aistudio.google.com/apikey)).
 
 > **Quota gratuit Gemini** : environ 20 requêtes par jour et par modèle. Wasf décrit 8 créneaux par requête (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota est épuisé.
+
+### 6. Lancer Wasf
+
+```powershell
+cd backend
+..\.venv\Scripts\python -m uvicorn app.main:app --port 8000      # Linux/macOS : ../.venv/bin/python -m uvicorn …
+```
+
+Ouvrez **<http://localhost:8000>**. Pour arrêter : `Ctrl+C` dans le terminal. Pour relancer plus tard : refaites seulement l'étape 6.
+
+### 7. Premier essai
+
+**Tableau de bord → « Essayer le clip d'exemple » → Lancer l'analyse → Éditeur → Valider → Export.**
+
+> À la première analyse, le modèle Whisper `small` (~460 Mo) est téléchargé une seule fois dans `models/`.
+
+### En cas de problème
+
+| Message | Solution |
+|---|---|
+| `ffmpeg` ou `node` n'est pas reconnu | fermez et rouvrez le terminal après l'installation (étape 1) |
+| « Frontend non construit » | refaites l'étape 4 |
+| le port 8000 est déjà utilisé | lancez avec `--port 8001` et ouvrez <http://localhost:8001> |
+| voix remplacée par un bip | pas d'Internet pour la voix edge-tts : installez espeak-ng (voix de secours) |
 
 ### Parcours complet : de la vidéo au film audiodécrit
 
@@ -202,7 +266,7 @@ Détails : [docs/ethics.md](docs/ethics.md) · Plan de validation : [docs/valida
 - ✅ Page de retours des testeurs aveugles, avec synthèse
 - ✅ Interface en français, textes arabes affichés de droite à gauche (RTL)
 - ✅ Accessibilité : HTML sémantique, lien d'évitement, focus visible, contrastes AA, **Lighthouse a11y = 100 sur les 6 pages**
-- ✅ Docker multi-étapes (non-root, HEALTHCHECK), compose, CI GitHub Actions, image GHCR amd64 + arm64
+- ✅ CI GitHub Actions : lint, tests, notebook et construction de l'interface
 
 ## Configuration
 
@@ -212,7 +276,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 |---|---|---|
 | `ASR_PROVIDER` | `auto` | `whisper` · `demo` · `auto` (whisper, repli demo signalé) |
 | `WHISPER_MODEL` | `small` | Taille faster-whisper **ou identifiant HF** d'un modèle CTranslate2 (ex. fine-tune tunisien) |
-| `WHISPER_DEVICE` / `WHISPER_COMPUTE_TYPE` | `cpu` / `int8` | `cuda` / `float16` sur GPU (`docker-compose.gpu.yml`) |
+| `WHISPER_DEVICE` / `WHISPER_COMPUTE_TYPE` | `cpu` / `int8` | `cuda` / `float16` sur carte graphique NVIDIA |
 | `VLM_PROVIDER` | `auto` | `gemini` · `openai` · `demo` · `auto` (selon les clés présentes) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | — / `gemini-3.6-flash` | Fournisseur Gemini |
 | `GEMINI_FALLBACK_MODELS` / `VLM_BATCH_SIZE` | `gemini-3.5-flash-lite,gemini-flash-lite-latest` / `8` | Modèles de secours quand le quota du jour est épuisé ; créneaux décrits par requête |
@@ -229,26 +293,26 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `MAX_UPLOAD_MB`, `SEED_SAMPLE`, `DATA_DIR`, `MODELS_DIR` | `500`, `true`, `./data`, `./models` | Stockage |
 | `SAMPLE_VIDEO` / `SAMPLE_TITLE` | `samples/vd_test.mp4` / « Exemple — extrait de film (test) » | Vidéo du projet d'exemple. Une vidéo locale peut aller dans `samples/local/` (ignoré par git). En DEMO MODE, une transcription et un script de référence sont utilisés s'ils sont fournis à côté de la vidéo (`<nom>.transcript.json`, `<nom>.script.json`) |
 
-## Développement local
+## Développement
 
-Prérequis : Python 3.11, Node 22, FFmpeg (et espeak-ng en option).
+Après l'installation ci-dessus :
 
-```bash
-python3.11 -m venv .venv && . .venv/bin/activate      # Windows : .venv\Scripts\activate
-pip install -r backend/requirements-dev.txt
-cd frontend && npm ci && npm run build && cd ..
-cd backend && uvicorn app.main:app --reload --port 8000  # → http://localhost:8000
-# Interface en rechargement à chaud : cd frontend && npm run dev  → http://localhost:5173 (proxy /api)
+```powershell
+.venv\Scripts\python -m pip install -r backendequirements-dev.txt     # outils de test et de lint
+cd backend
+..\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000    # rechargement automatique du serveur
 ```
 
-Raccourcis : `make install`, `make backend`, `make frontend`, `make test`, `make lint`, `make up`, `make notebook`, `make ml` (entraînement complet), `make ml-train` (ré-entraîner sans retélécharger).
+Pour modifier l'interface avec rechargement à chaud : `cd frontend` puis `npm run dev`, et ouvrez <http://localhost:5173> (les appels `/api` sont relayés vers le port 8000).
 
 ## Tests
 
-```bash
-cd backend && pytest -q        # 32 tests : silences/VAD réel, découpage en créneaux, ajustement, VTT/TTML/crédits, fournisseurs (HTTP simulé), quota Gemini et requêtes groupées, variables et sélection ML, parcours API complet
-ruff check .                   # lint
-cd ../frontend && npm run build
+```powershell
+cd backend
+..\.venv\Scripts\python -m pytest -q     # 49 tests : silences/VAD réel, créneaux, ajustement, VTT/TTML/crédits, fournisseurs (HTTP simulé), quota Gemini, sélection ML, parcours API complet, migrations
+..\.venv\Scriptsuff check .            # lint
+cd ..rontend
+npm run build
 ```
 
 - Le notebook [`notebooks/pipeline_demo.ipynb`](notebooks/pipeline_demo.ipynb) exécute le pipeline de bout en bout en DEMO MODE (vérifié en CI).
@@ -288,7 +352,7 @@ cd ../frontend && npm run build
 | scikit-learn | BSD-3-Clause |
 | QuerYD / YouDescribe (horaires et textes des descriptions, pour l'entraînement) | Données de recherche ; vidéos YouTube téléchargées localement par `ml/download.py`, **jamais redistribuées** (`ml/data/` est exclu du dépôt) |
 | FFmpeg | LGPL/GPL (binaire système, non redistribué dans le dépôt) |
-| espeak-ng | GPL-3.0 (paquet système de l'image Docker) |
+| espeak-ng | GPL-3.0 (installé séparément, facultatif) |
 | edge-tts | Bibliothèque sous LGPL-3.0 ; service vocal de Microsoft soumis à ses conditions |
 | Gemini / modèles OpenAI-compatibles | Conditions de chaque fournisseur ; non utilisés en DEMO MODE |
 | LinTO, TunSwitch, TARIC, TEDxTN (prévus pour le fine-tuning, non inclus) | Voir la licence de chaque jeu de données à sa source |

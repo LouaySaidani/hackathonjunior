@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# Regenerates backend/tests/fixtures/sample_medina.mp4, the synthetic CC0 clip used by the tests and the notebook. Requires docker (for espeak-ng) and ffmpeg.
+# Regenerates backend/tests/fixtures/sample_medina.mp4, the synthetic CC0 clip used by the tests and the notebook.
+# Requires espeak-ng and ffmpeg on the PATH.
 set -euo pipefail
 OUT="$(cd "$(dirname "$0")/.." && pwd)/backend/tests/fixtures"
 TMP="$(mktemp -d)"
-docker run --rm -v "$TMP:/out" debian:bookworm-slim bash -c "apt-get update -qq && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends espeak-ng >/dev/null && \
-  espeak-ng -v fr+f3 -s 150 -w /out/l1.wav 'Ahla bik ! Bienvenue à Sidi Bou Saïd.' && \
-  espeak-ng -v fr+m3 -s 150 -w /out/l2.wav 'Le café des Nattes est juste en haut de la rue.' && \
-  espeak-ng -v fr+f3 -s 150 -w /out/l3.wav 'Deux thés à la menthe, s il vous plaît.' && \
-  espeak-ng -v fr+m3 -s 150 -w /out/l4.wav 'Merci beaucoup. À demain, inchallah.'"
+espeak-ng -v fr+f3 -s 150 -w "$TMP/l1.wav" 'Ahla bik ! Bienvenue à Sidi Bou Saïd.'
+espeak-ng -v fr+m3 -s 150 -w "$TMP/l2.wav" 'Le café des Nattes est juste en haut de la rue.'
+espeak-ng -v fr+f3 -s 150 -w "$TMP/l3.wav" 'Deux thés à la menthe, s il vous plaît.'
+espeak-ng -v fr+m3 -s 150 -w "$TMP/l4.wav" 'Merci beaucoup. À demain, inchallah.'
 B="drawbox=t=fill"
 ffmpeg -y -v error \
  -f lavfi -i "color=c=0xEFE9DC:s=854x480:r=24:d=9" -f lavfi -i "color=c=0xC9853A:s=854x480:r=24:d=9" \

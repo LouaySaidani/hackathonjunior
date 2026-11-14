@@ -7,7 +7,7 @@ Errors return `{"detail": "<message en français>"}`.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/health` | `{"status":"ok","version","demo_mode"}`, used by the Docker HEALTHCHECK |
+| GET | `/health` | `{"status":"ok","version","demo_mode"}`, used by the interface to check that the server is up |
 | GET | `/api/system` | Active providers, DEMO MODE, thresholds (never secrets) |
 | GET | `/api/stats` | Dashboard counters |
 

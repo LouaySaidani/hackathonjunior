@@ -5,8 +5,7 @@ Tous les droits appartiennent à leurs ayants droit. Il n'est **pas** placé sou
 
 - Il sert uniquement à **tester Wasf et à le présenter au jury du hackathon**, dans ce **dépôt privé**.
 - **Ne pas le redistribuer** ni l'utiliser en dehors de ce cadre.
-- **À retirer de tout l'historique git** (pas seulement du dernier commit) avant de rendre le dépôt public
-  ou de publier une image Docker publique : le `Dockerfile` copie le dossier `samples/`.
+- **À retirer de tout l'historique git** (pas seulement du dernier commit) avant de rendre le dépôt public.
 - Pour une démonstration publique, utilisez plutôt un film sous licence libre
   (`scripts/get_test_videos.sh` : films de la Blender Foundation, CC-BY).
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Wasf is a single container: a FastAPI backend that serves a React single-page app, runs AI/media jobs in an
+Wasf runs as a single process on the user's machine: a FastAPI backend that serves a React single-page app, runs AI/media jobs in an
 in-process thread pool, and stores everything in SQLite + local files under `./data`.
 
 ```mermaid

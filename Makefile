@@ -1,4 +1,4 @@
-.PHONY: install dev backend frontend test lint build docker up notebook sample ml ml-train
+.PHONY: install dev backend frontend test lint build notebook sample ml ml-train
 
 PY ?= python3.11
 VENV = .venv
@@ -23,12 +23,6 @@ lint:
 
 build:
 	cd frontend && npm run build
-
-docker:
-	docker build -t wasf:local .
-
-up:
-	docker compose up --build
 
 notebook:
 	$(BIN)/jupyter nbconvert --to notebook --execute --inplace notebooks/pipeline_demo.ipynb
