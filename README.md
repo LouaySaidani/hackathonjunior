@@ -19,6 +19,8 @@
 >
 > Détails : [Limites honnêtes](#limites-honnêtes) · [Feuille de route](#feuille-de-route).
 
+**Sommaire** : [Le problème](#le-problème) · [La solution](#la-solution) · [Vocabulaire](#vocabulaire) · [Installation et lancement](#installation-et-lancement) · [Utilisation](#utilisation) · [Architecture](#architecture) · [Le pipeline en 7 étapes](#le-pipeline-en-7-étapes) · [Apprentissage automatique](#apprentissage-automatique--où-décrire-) · [Éthique 360](#éthique-360) · [Fonctionnalités](#fonctionnalités-implémentées) · [Configuration](#configuration) · [Développement et tests](#développement) · [Feuille de route](#feuille-de-route) · [Limites honnêtes](#limites-honnêtes) · [Licences](#licences-des-données-et-des-modèles)
+
 ---
 
 ## Le problème
@@ -70,6 +72,19 @@ Repère du secteur : environ **1 heure de travail par minute** d'audiodescriptio
 
 </details>
 
+## Vocabulaire
+
+| Terme | Sens dans Wasf |
+|---|---|
+| **Audiodescription (AD)** | Voix qui décrit ce qui se passe à l'image, placée entre les dialogues, pour les personnes aveugles et malvoyantes |
+| **Silence** | Passage du film sans dialogue d'au moins 1,5 s, détecté automatiquement |
+| **Créneau** | Partie d'un silence où une ligne d'AD peut être placée ; les longs silences sont découpés en créneaux d'environ 10 s |
+| **Score de pertinence** | Note donnée à chaque créneau par notre modèle ML : faut-il y décrire quelque chose ? |
+| **Brouillon IA** | Ligne proposée par le modèle de vision (Gemini), qui reste muette tant qu'un humain ne l'a pas validée |
+| **Budget de mots** | Nombre maximal de mots qui tiennent dans un créneau, selon la langue |
+| **VAD / ASR / VLM / TTS** | Détection de la parole / transcription / modèle de vision et de langage / synthèse vocale |
+| **DEMO MODE** | Fonctionnement sans clé d'API : les descriptions sont simulées et signalées comme telles partout |
+
 ## Installation et lancement
 
 Wasf s'installe et se lance sur votre ordinateur. Comptez **15 à 20 minutes** la première fois, avec une connexion Internet.
@@ -95,7 +110,7 @@ winget install -e --id Gyan.FFmpeg
 
 **Fermez puis rouvrez PowerShell** pour que les nouveaux outils soient trouvés, puis vérifiez avec les commandes de la dernière colonne.
 
-**Linux** (Debian/Ubuntu) : `sudo apt install git python3.11 python3.11-venv nodejs npm ffmpeg espeak-ng`. **macOS** (Homebrew) : `brew install git python@3.11 node ffmpeg espeak-ng`.
+**Linux et macOS** : voir l'encadré [Installation rapide sous Linux et macOS](#installation-rapide-sous-linux-et-macos) ci-dessous, qui remplace les étapes 1 à 6.
 
 ### 2. Récupérer le code
 
@@ -150,6 +165,34 @@ Ouvrez **<http://localhost:8000>**. Pour arrêter : `Ctrl+C` dans le terminal. P
 
 > À la première analyse, le modèle Whisper `small` (~460 Mo) est téléchargé une seule fois dans `models/`.
 
+### Installation rapide sous Linux et macOS
+
+Les mêmes étapes, avec le `Makefile` du dépôt :
+
+```bash
+# 1. Outils
+#    Debian 12 / Ubuntu 22.04 : sudo apt install git python3.11 python3.11-venv ffmpeg espeak-ng
+#    Ubuntu 24.04 (pas de Python 3.11 par défaut) : sudo add-apt-repository ppa:deadsnakes/ppa, puis la ligne ci-dessus
+#    macOS (Homebrew) : brew install git python@3.11 node ffmpeg espeak-ng
+#    Node.js 22 : le paquet apt « nodejs » est trop ancien, passez par https://nodejs.org ou nvm (nvm install 22)
+
+# 2. Code
+git clone https://github.com/LouaySaidani/hackathonjunior.git
+cd hackathonjunior
+
+# 3 et 4. Dépendances Python (dans .venv) et interface web
+make install
+make build
+
+# 5. Configuration (facultatif, voir l'étape 5 ci-dessus)
+cp .env.example .env
+
+# 6. Lancement, puis ouvrez http://localhost:8000
+make backend
+```
+
+Vérifiez les versions avec `python3.11 --version`, `node --version` (22 ou plus) et `ffmpeg -version`.
+
 ### En cas de problème
 
 | Message | Solution |
@@ -158,6 +201,10 @@ Ouvrez **<http://localhost:8000>**. Pour arrêter : `Ctrl+C` dans le terminal. P
 | « Frontend non construit » | refaites l'étape 4 |
 | le port 8000 est déjà utilisé | lancez avec `--port 8001` et ouvrez <http://localhost:8001> |
 | voix remplacée par un bip | pas d'Internet pour la voix edge-tts : installez espeak-ng (voix de secours) |
+| `npm ci` échoue ou Vite refuse de démarrer | Node.js trop ancien : installez la version 22 ou plus |
+| `python3.11: command not found` (Linux) | Python 3.11 n'est pas installé : voir l'[installation rapide](#installation-rapide-sous-linux-et-macos) |
+
+## Utilisation
 
 ### Parcours complet : de la vidéo au film audiodécrit
 
