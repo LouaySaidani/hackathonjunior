@@ -39,6 +39,14 @@ Aucune ligne n'est validée automatiquement, et seules les lignes validées par 
 <td><b>Analyse</b> : transcription, silences découpés en créneaux, score ML de chaque créneau, puis brouillons rédigés à partir des images clés.</td>
 <td><b>Éditeur</b> : chaque brouillon est relu, corrigé, puis validé par une personne nommée.</td>
 </tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/img/dashboard.png" alt="Tableau de bord : nombre de projets, lignes validées, lignes à relire, retours de testeurs et projets récents"></td>
+<td width="50%" valign="top"><img src="docs/img/export.png" alt="Export et contrôle qualité : aperçu final de la vidéo, validation humaine 3/5, résumé d'accessibilité et liste des fichiers générés"></td>
+</tr>
+<tr>
+<td><b>Tableau de bord</b> : projets récents, lignes validées ou à relire, retours des testeurs.</td>
+<td><b>Export</b> : aperçu final, résumé d'accessibilité et fichiers générés (MP4, WebVTT, TTML, crédits).</td>
+</tr>
 </table>
 
 **Gain de temps mesuré.** Sur un extrait de 63 s (« Les éphémères », Nils Caneele, CC BY-NC), il a fallu 4 min 36 s au total : 58 s d'analyse automatique, 3 min 12 s de relecture humaine, 26 s de voix et de mixage. Une audiodescription professionnelle complète demande environ 1 heure par minute de film (AFP). Notre mesure n'est qu'indicative (une séance, un relecteur non professionnel) et devra être refaite avec des professionnel·le·s.
@@ -63,6 +71,8 @@ Un·e audiodescripteur·rice ne décrit pas tous les silences. Nous avons entra�
 |---|---|---|---|
 | Décrire tous les créneaux | 61 % | 100 % | 0,76 |
 | Modèle ML | 62 % | 96 % | 0,75 |
+
+<p align="center"><img src="ml/reports/timelines.png" alt="Frises des 13 vidéos de test : créneaux retenus par le modèle et emplacements des descriptions humaines" width="760"></p>
 
 Le modèle apprend un vrai signal (AP de 0,74 contre 0,61 au hasard), mais avec si peu de données il ne fait pas encore mieux que « tout décrire ». Les données nous ont en revanche appris à découper les longs silences : 91 % des descriptions humaines tombent désormais dans un créneau de Wasf. Détails et rapport : [ml/README.md](ml/README.md).
 
