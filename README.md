@@ -11,6 +11,14 @@
 > Projet réalisé pour le hackathon **OIF × JEI « IA Éthique 360 »**.
 > **Wasf** (*وصف*) signifie « description » en arabe. *L'IA décrit. L'humain valide.*
 
+> [!NOTE]
+> **Phase 1 du hackathon : un prototype, pas une version finale.**
+> - **Langues** : le parcours complet a été développé et testé en **français**. L'**arabe standard** et la **darija** sont sélectionnables, mais encore **en cours de test**.
+> - **Rédaction des brouillons** : elle passe pour l'instant par **Gemini**, un LLM multimodal en ligne de Google. En phase 2, nous voulons entraîner **notre propre modèle de description**, dédié à l'audiodescription et attentif au contexte du film.
+> - **Choix des scènes à décrire** : notre modèle ML est entraîné et mesuré, mais il n'est **pas encore parfait** : avec 17 vidéos d'entraînement, il ne fait pas mieux que « tout décrire ». C'est pourquoi l'humain garde toujours la décision.
+>
+> Détails : [Limites honnêtes](#limites-honnêtes) · [Feuille de route](#feuille-de-route).
+
 ---
 
 ## Le problème
@@ -92,7 +100,7 @@ cd hackathonjunior
 ```powershell
 py -3.11 -m venv .venv                                       # Linux/macOS : python3.11 -m venv .venv
 .venv\Scripts\python -m pip install --upgrade pip              # Linux/macOS : .venv/bin/python …
-.venv\Scripts\python -m pip install -r backendequirements.txt
+.venv\Scripts\python -m pip install -r backend\requirements.txt
 ```
 
 ### 4. Construire l'interface web
@@ -244,8 +252,8 @@ Détails, variables et vidéos de test : [ml/README.md](ml/README.md).
 |---|---|
 | **Créateurs et métiers** | L'audiodescripteur·rice est l'auteur·e : validation explicite et nominative de chaque ligne, jamais automatique. Seules les lignes validées sont vocalisées et exportées. Relecteur·rice·s aveugles **rémunéré·e·s** et associé·e·s à l'évaluation (modèle ATAA). |
 | **Droits** | Case de consentement obligatoire (refus côté serveur sinon). **Aucun entraînement** sur les films importés ; opt-in désactivé par défaut. Script complet remis à l'ayant droit (`script_ayant_droit.json`). Clip de test synthétique sous CC0 ; la vidéo d'exemple est un extrait protégé, réservé au test dans ce dépôt privé. |
-| **Données** | **Pas de reconnaissance faciale** ; personnages nommés uniquement via la distribution fournie. Stockage local, secrets côté serveur. Seules quelques images clés sont envoyées au VLM, jamais l'audio. Jeux de données ouverts de parole tunisienne recensés pour le fine-tuning (LinTO, TunSwitch, TARIC, TEDxTN). |
-| **Cultures et langues** | Français, arabe standard et darija tunisienne. RTL correct dans l'interface, le VTT et le TTML. Termes culturels exacts uniquement s'ils sont visibles. **Le choix entre arabe standard et darija revient aux usagers aveugles**, et il est mesuré. |
+| **Données** | **Pas de reconnaissance faciale** ; personnages nommés uniquement via la distribution fournie. Stockage local, secrets côté serveur. Seules quelques images clés et le dialogue voisin (en texte) sont envoyés au VLM (Gemini, service en ligne), jamais l'audio ni le film entier. Le texte des lignes validées est envoyé au service vocal de Microsoft (edge-tts) ; espeak-ng permet de rester hors ligne. Jeux de données ouverts de parole tunisienne recensés pour le fine-tuning (LinTO, TunSwitch, TARIC, TEDxTN). |
+| **Cultures et langues** | Français, arabe standard et darija tunisienne (phase 1 : testé en français ; arabe et darija en cours de test). RTL correct dans l'interface, le VTT et le TTML. Termes culturels exacts uniquement s'ils sont visibles. **Le choix entre arabe standard et darija revient aux usagers aveugles**, et il est mesuré. |
 | **Transparence** | 3 états visibles (icône et texte, jamais la couleur seule). Confiance affichée, mention « À relire », historique, texte IA d'origine conservé. Mentions IA et validation dans le VTT, le TTML, les métadonnées MP4 et `credits.txt`. Bannière **DEMO MODE** propagée jusque dans les exports. |
 | **Planète** | Seuls les silences et quelques images clés sont traités. Whisper `small` quantifié en int8, **CPU par défaut**, modèles téléchargés une seule fois. |
 | **Limites honnêtes** | Voir ci-dessous. Aucune statistique inventée, aucun chiffre avancé sur le nombre de personnes aveugles en Tunisie. |
@@ -298,7 +306,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 Après l'installation ci-dessus :
 
 ```powershell
-.venv\Scripts\python -m pip install -r backendequirements-dev.txt     # outils de test et de lint
+.venv\Scripts\python -m pip install -r backend\requirements-dev.txt     # outils de test et de lint
 cd backend
 ..\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000    # rechargement automatique du serveur
 ```
@@ -310,8 +318,8 @@ Pour modifier l'interface avec rechargement à chaud : `cd frontend` puis `npm r
 ```powershell
 cd backend
 ..\.venv\Scripts\python -m pytest -q     # 49 tests : silences/VAD réel, créneaux, ajustement, VTT/TTML/crédits, fournisseurs (HTTP simulé), quota Gemini, sélection ML, parcours API complet, migrations
-..\.venv\Scriptsuff check .            # lint
-cd ..rontend
+..\.venv\Scripts\ruff check .            # lint
+cd ..\frontend
 npm run build
 ```
 
@@ -320,6 +328,9 @@ npm run build
 
 ## Feuille de route
 
+- **Notre propre modèle de description** (phase 2) : un modèle entraîné pour l'audiodescription, qui tient compte du contexte du film (scènes précédentes, personnages, dialogue), pour remplacer Gemini et pouvoir fonctionner en local.
+- **Meilleur choix des scènes à décrire** : réentraîner le modèle ML sur plus de vidéos (`--train 80 --test 20`) et sur des films francophones et tunisiens annotés, puis trier l'ordre de relecture par score.
+- **Arabe standard et darija** : terminer les tests avec des locuteurs natifs et des usagers aveugles.
 - **Fine-tuning darija** de Whisper sur LinTO, TunSwitch, TARIC et TEDxTN (selon leurs licences), puis conversion CTranslate2 et branchement via `WHISPER_MODEL`.
 - **Cohérence des personnages** d'une scène à l'autre, sans reconnaissance faciale (vêtements et position, à partir de la distribution).
 - **Édition collaborative** (plusieurs audiodescripteur·rice·s, relecture croisée, commentaires).
@@ -328,6 +339,9 @@ npm run build
 
 ## Limites honnêtes
 
+- **Phase 1** : Wasf est un prototype de hackathon. Tout n'est pas terminé, et c'est assumé : les points ci-dessous disent ce qui marche, ce qui reste à tester et ce qui sera remplacé.
+- **Langues** : développé et testé en **français**. L'arabe standard et la darija sont sélectionnables (brouillons, voix `ar-TN`, affichage de droite à gauche), mais encore en cours de test.
+- **Gemini, solution de phase 1** : les brouillons sont rédigés par un LLM en ligne de Google, qui reçoit quelques images clés et le dialogue voisin. Il sera remplacé par notre propre modèle de description (voir la feuille de route).
 - **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour une vidéo fournie avec un script de référence (la vidéo d'exemple `samples/vd_test.mp4` et le clip de test synthétique), elle renvoie ce script relu par un humain (`scripts/export_reference.py` le produit à partir d'un projet validé) ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
 - **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Wasf décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
