@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     seed_sample: bool = True
     # Video of the sample project (relative to the repo root). If <name>.transcript.json and
     # <name>.script.json sit next to it, DEMO MODE uses them instead of a generic placeholder.
-    sample_video: str = "samples/vd_test.mp4"
-    sample_title: str = "Exemple — extrait de film (test)"
+    sample_video: str = "samples/les_ephemeres.mp4"
+    sample_title: str = "Exemple — Les éphémères (extrait, CC BY-NC)"
 
     # --- AI providers ---
     # ASR: whisper | demo | auto (whisper, fallback to demo if the model cannot be loaded)

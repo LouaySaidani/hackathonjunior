@@ -20,7 +20,7 @@ code** ; le fichier et le comportement correspondants sont indiqués.
 - **Aucun entraînement** sur les films importés. L'option d'opt-in est décochée par défaut, enregistrée, et n'est utilisée par aucun code dans ce MVP.
 - Le script d'audiodescription complet (`script_ayant_droit.json`, avec l'historique) est généré pour être **remis à l'ayant droit**.
 - Le clip de test est synthétique et placé sous CC0 (`backend/tests/fixtures/LICENSE.md`).
-- La vidéo d'exemple (`samples/vd_test.mp4`) est un **extrait de film protégé** : elle sert uniquement au test et au jury, dans ce dépôt privé, et doit être retirée de l'historique git avant toute publication (`samples/LICENSE.md`).
+- La vidéo d'exemple (`samples/les_ephemeres.mp4`) est un extrait du court métrage francophone « Les éphémères » (Nils Caneele, 2013), sous licence **CC BY-NC** : crédité, usage non commercial (`samples/LICENSE.md`). L'ancien extrait protégé a été retiré du dépôt ; il doit encore être retiré de l'historique git avant toute publication.
 
 ## 3. Données et vie privée
 

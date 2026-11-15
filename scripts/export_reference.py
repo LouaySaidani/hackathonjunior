@@ -3,7 +3,7 @@
     python scripts/export_reference.py <project_id>            # validated lines only (default)
     python scripts/export_reference.py <project_id> --edited   # also lines edited but not yet validated
 
-Writes, next to the sample video (SAMPLE_VIDEO, default samples/vd_test.mp4):
+Writes, next to the sample video (SAMPLE_VIDEO, default samples/les_ephemeres.mp4):
   <name>.script.json      the descriptions, read by the `demo` VLM instead of Gemini
   <name>.transcript.json  the dialogue, read by the `demo` ASR instead of Whisper
 

@@ -1,0 +1,37 @@
+[
+ {
+  "anchor": 0.0,
+  "confidence": 0.95,
+  "text": {
+   "fr": "Des feuilles vertes rondes. Une personne agenouillée travaille la terre le long d'une cordelette."
+  }
+ },
+ {
+  "anchor": 16.25,
+  "confidence": 0.95,
+  "text": {
+   "fr": "Après les baies, un enfant s'amuse dans une allée tapissée de feuilles mortes, près d'une personne aux cheveux gris."
+  }
+ },
+ {
+  "anchor": 25.71,
+  "confidence": 0.95,
+  "text": {
+   "fr": "L'enfant s'accroupit pour ramasser des feuilles mortes au sol."
+  }
+ },
+ {
+  "anchor": 44.29,
+  "confidence": 0.95,
+  "text": {
+   "fr": "La personne aux cheveux gris sourit."
+  }
+ },
+ {
+  "anchor": 49.92,
+  "confidence": 0.9,
+  "text": {
+   "fr": "L'image devient floue."
+  }
+ }
+]

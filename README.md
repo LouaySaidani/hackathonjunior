@@ -36,12 +36,23 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 
 **Aucune ligne n'est validée automatiquement.** Chaque ligne issue de l'IA reste étiquetée comme telle jusqu'à sa validation par une personne nommée.
 
+**Temps mesuré** sur la vidéo d'exemple (63 s de film, d'après l'historique horodaté de chaque ligne, 15/11/2026) :
+
+| Étape | Durée |
+|---|---|
+| Analyse automatique : silences, transcription, tri ML, 6 brouillons | 58 s |
+| Relecture humaine : 6 lignes, 5 validées, 1 rejetée | 3 min 12 s |
+| Voix de synthèse et mixage | 26 s |
+| **Total** | **4 min 36 s** |
+
+Repère du secteur : environ **1 heure de travail par minute** d'audiodescription (AFP), pour un travail professionnel complet. Notre mesure est **indicative** : une seule séance, un relecteur non professionnel, un extrait court ; le temps de visionnage avant la première décision n'est pas compté. Elle devra être refaite avec des audiodescripteur·rice·s professionnel·le·s.
+
 <p align="center"><img src="docs/assets/timeline.svg" width="100%" alt="Frise : chaque silence entre les dialogues reçoit une ligne d'audiodescription qui respecte un budget de mots, avec son état : validée, modifiée ou brouillon IA."></p>
 
 <table>
 <tr>
 <td width="50%" valign="top"><img src="docs/img/analysis.png" alt="Espace d'analyse : vidéo, étapes de l'analyse, modèles utilisés, frise dialogues et silences, transcription Whisper horodatée"></td>
-<td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 13/17, bouton Tout valider, frise colorée selon l'état des lignes, carte validée par un humain avec sa voix générée"></td>
+<td width="50%" valign="top"><img src="docs/img/editor.png" alt="Éditeur : nom du validateur, progression 3/5, bouton Tout valider, frise colorée selon l'état des lignes, carte validée par un humain avec sa voix générée"></td>
 </tr>
 <tr>
 <td><b>Analyse</b> : Whisper transcrit les dialogues, Wasf trouve les silences et les découpe en créneaux, le modèle ML donne à chaque créneau un score de pertinence, puis Gemini rédige à partir des images clés.</td>
@@ -49,7 +60,7 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 </tr>
 </table>
 
-<sub>Captures réelles sur la vidéo d'exemple (extrait de film protégé, usage limité à ce dépôt privé : voir <code>samples/LICENSE.md</code>) : 17 brouillons rédigés par <code>gemini-3.6-flash</code> en 2 requêtes, relus dans l'éditeur ; 13 lignes validées et vocalisées avec <code>fr-FR-DeniseNeural</code>.</sub>
+<sub>Captures réelles sur la vidéo d'exemple, un extrait de 63 s du court métrage francophone « Les éphémères » (Nils Caneele, 2013, CC BY-NC : voir <code>samples/LICENSE.md</code>) : 6 brouillons rédigés par <code>gemini-3.6-flash</code>, relus dans l'éditeur ; lignes validées, rejetée, corrigée ou encore à relire, vocalisées avec <code>fr-FR-DeniseNeural</code>.</sub>
 
 <details>
 <summary>Autres écrans : tableau de bord, export</summary>
@@ -251,7 +262,7 @@ Détails, variables et vidéos de test : [ml/README.md](ml/README.md).
 | Angle | Notre réponse de conception |
 |---|---|
 | **Créateurs et métiers** | L'audiodescripteur·rice est l'auteur·e : validation explicite et nominative de chaque ligne, jamais automatique. Seules les lignes validées sont vocalisées et exportées. Relecteur·rice·s aveugles **rémunéré·e·s** et associé·e·s à l'évaluation (modèle ATAA). |
-| **Droits** | Case de consentement obligatoire (refus côté serveur sinon). **Aucun entraînement** sur les films importés ; opt-in désactivé par défaut. Script complet remis à l'ayant droit (`script_ayant_droit.json`). Clip de test synthétique sous CC0 ; la vidéo d'exemple est un extrait protégé, réservé au test dans ce dépôt privé. |
+| **Droits** | Case de consentement obligatoire (refus côté serveur sinon). **Aucun entraînement** sur les films importés ; opt-in désactivé par défaut. Script complet remis à l'ayant droit (`script_ayant_droit.json`). Clip de test synthétique sous CC0 ; la vidéo d'exemple est un court métrage francophone sous licence libre (CC BY-NC), crédité. |
 | **Données** | **Pas de reconnaissance faciale** ; personnages nommés uniquement via la distribution fournie. Stockage local, secrets côté serveur. Seules quelques images clés et le dialogue voisin (en texte) sont envoyés au VLM (Gemini, service en ligne), jamais l'audio ni le film entier. Le texte des lignes validées est envoyé au service vocal de Microsoft (edge-tts) ; espeak-ng permet de rester hors ligne. Jeux de données ouverts de parole tunisienne recensés pour le fine-tuning (LinTO, TunSwitch, TARIC, TEDxTN). |
 | **Cultures et langues** | Français, arabe standard et darija tunisienne (phase 1 : testé en français ; arabe et darija en cours de test). RTL correct dans l'interface, le VTT et le TTML. Termes culturels exacts uniquement s'ils sont visibles. **Le choix entre arabe standard et darija revient aux usagers aveugles**, et il est mesuré. |
 | **Transparence** | 3 états visibles (icône et texte, jamais la couleur seule). Confiance affichée, mention « À relire », historique, texte IA d'origine conservé. Mentions IA et validation dans le VTT, le TTML, les métadonnées MP4 et `credits.txt`. Bannière **DEMO MODE** propagée jusque dans les exports. |
@@ -299,7 +310,7 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `GAP_SELECTION` | `auto` | `auto` (modèle ML s'il est entraîné, sinon tous les silences) · `model` · `all` |
 | `GAP_SCORE_THRESHOLD` / `GAP_MODEL_PATH` | `0` (seuil appris) / `ml/artifacts/gap_scorer.joblib` | Sélection ML des silences |
 | `MAX_UPLOAD_MB`, `SEED_SAMPLE`, `DATA_DIR`, `MODELS_DIR` | `500`, `true`, `./data`, `./models` | Stockage |
-| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | `samples/vd_test.mp4` / « Exemple — extrait de film (test) » | Vidéo du projet d'exemple. Une vidéo locale peut aller dans `samples/local/` (ignoré par git). En DEMO MODE, une transcription et un script de référence sont utilisés s'ils sont fournis à côté de la vidéo (`<nom>.transcript.json`, `<nom>.script.json`) |
+| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | `samples/les_ephemeres.mp4` / « Exemple — Les éphémères (extrait, CC BY-NC) » | Vidéo du projet d'exemple. Une vidéo locale peut aller dans `samples/local/` (ignoré par git). En DEMO MODE, une transcription et un script de référence sont utilisés s'ils sont fournis à côté de la vidéo (`<nom>.transcript.json`, `<nom>.script.json`) |
 
 ## Développement
 
@@ -342,7 +353,7 @@ npm run build
 - **Phase 1** : Wasf est un prototype de hackathon. Tout n'est pas terminé, et c'est assumé : les points ci-dessous disent ce qui marche, ce qui reste à tester et ce qui sera remplacé.
 - **Langues** : développé et testé en **français**. L'arabe standard et la darija sont sélectionnables (brouillons, voix `ar-TN`, affichage de droite à gauche), mais encore en cours de test.
 - **Gemini, solution de phase 1** : les brouillons sont rédigés par un LLM en ligne de Google, qui reçoit quelques images clés et le dialogue voisin. Il sera remplacé par notre propre modèle de description (voir la feuille de route).
-- **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour une vidéo fournie avec un script de référence (la vidéo d'exemple `samples/vd_test.mp4` et le clip de test synthétique), elle renvoie ce script relu par un humain (`scripts/export_reference.py` le produit à partir d'un projet validé) ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
+- **DEMO MODE** : sans clé d'API, la compréhension visuelle est **simulée**. Pour une vidéo fournie avec un script de référence (la vidéo d'exemple `samples/les_ephemeres.mp4` et le clip de test synthétique), elle renvoie ce script relu par un humain (`scripts/export_reference.py` le produit à partir d'un projet validé) ; pour toute autre vidéo, une ligne générique calculée à partir des couleurs réelles de l'image, à faible confiance. La bannière et les exports le signalent.
 - **Gemini** a été testé avec une vraie clé. La version gratuite n'autorise qu'**environ 20 requêtes par jour et par modèle**. Wasf décrit donc **8 créneaux par requête** (un extrait de 2 minutes coûte 2 requêtes) et passe automatiquement à un modèle « lite » quand le quota du jour est épuisé. Si tous les quotas sont épuisés, l'analyse se termine quand même, avec les brouillons déjà écrits ; les créneaux restants se rédigent plus tard avec « Rédiger ici » ou à la main. L'intégration OpenAI-compatible n'est testée qu'avec des réponses HTTP simulées.
 - **Réel pendant le hackathon** : FFmpeg, Silero VAD, faster-whisper `small` sur CPU, Gemini, edge-tts (FR et ar-TN), mixage, exports, entraînement et évaluation du modèle ML sur 30 vidéos.
 - **Modèle ML** : entraîné sur 17 vidéos seulement, avec des descriptions bénévoles en anglais. Il apprend *où* décrire, pas *quoi* ni dans quelle langue, et ne bat pas encore la règle « tout décrire » (voir [les résultats](#apprentissage-automatique--où-décrire-)). Son transfert vers des films tunisiens reste à vérifier.
@@ -359,7 +370,7 @@ npm run build
 | Élément | Licence |
 |---|---|
 | Code de Wasf | Apache-2.0 ([LICENSE](LICENSE)) |
-| Vidéo d'exemple `samples/vd_test.mp4` | **Extrait de film protégé**, tous droits réservés : test et jury uniquement, dépôt privé, à retirer avant toute publication ([samples/LICENSE.md](samples/LICENSE.md)) |
+| Vidéo d'exemple `samples/les_ephemeres.mp4` et son script de référence | Extrait de « Les éphémères », Nils Caneele (2013), **CC BY-NC** : usage non commercial, attribution obligatoire ([samples/LICENSE.md](samples/LICENSE.md)) |
 | Clip de test synthétique, transcription et script de référence | CC0 1.0 ([backend/tests/fixtures/LICENSE.md](backend/tests/fixtures/LICENSE.md)) |
 | faster-whisper / CTranslate2 | MIT ; poids Whisper d'OpenAI sous MIT |
 | Silero VAD | MIT |

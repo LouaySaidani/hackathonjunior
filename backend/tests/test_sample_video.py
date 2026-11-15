@@ -51,7 +51,7 @@ def test_previous_sample_is_kept_as_an_ordinary_project(client, monkeypatch):
 
     old = client.post("/api/projects/sample").json()
     monkeypatch.setattr(get_settings(), "seed_sample", False)
-    monkeypatch.setattr(get_settings(), "sample_video", "samples/vd_test.mp4")
+    monkeypatch.setattr(get_settings(), "sample_video", "samples/ancien_extrait.mp4")
 
     _startup()
 

@@ -17,7 +17,7 @@ Errors return `{"detail": "<message en français>"}`.
 |---|---|---|
 | GET | `/api/projects` | List with status counts, `needs_review`, `active_job` |
 | POST | `/api/projects` | **multipart**: `file` (mp4/mov/mkv), `title`, `language` (`fr`/`ar`/`aeb`/`en`), `dialogue_language` (`auto`/…), `cast` (JSON `[{name, description}]`), `consent` (**must be true**, else 400), `training_opt_in` (default false). 415 on bad type/unreadable video, 413 if too large |
-| POST | `/api/projects/sample` | Creates a project from the sample video (`SAMPLE_VIDEO`, default `samples/vd_test.mp4`) |
+| POST | `/api/projects/sample` | Creates a project from the sample video (`SAMPLE_VIDEO`, default `samples/les_ephemeres.mp4`) |
 | GET | `/api/projects/{id}` | Full project: transcript, speech regions, gaps, keyframes, descriptions |
 | PATCH | `/api/projects/{id}` | `title`, `language`, `validator_name`, `cast`, `training_opt_in` |
 | DELETE | `/api/projects/{id}` | Deletes the project and its files |
