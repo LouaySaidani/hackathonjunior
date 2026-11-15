@@ -147,28 +147,17 @@ Ces vidéos sont sous licence CC-BY : vous pouvez les montrer en public en citan
 
 ## Configuration
 
-Toutes les variables sont documentées dans [`.env.example`](../.env.example).
+Les réglages se font dans `.env`. Les plus utiles :
 
 | Variable | Défaut | Rôle |
 |---|---|---|
-| `ASR_PROVIDER` | `auto` | `whisper` · `demo` · `auto` (whisper, repli demo signalé) |
-| `WHISPER_MODEL` | `small` | Taille faster-whisper **ou identifiant HF** d'un modèle CTranslate2 (ex. fine-tune tunisien) |
-| `WHISPER_DEVICE` / `WHISPER_COMPUTE_TYPE` | `cpu` / `int8` | `cuda` / `float16` sur carte graphique NVIDIA |
-| `VLM_PROVIDER` | `auto` | `gemini` · `openai` · `demo` · `auto` (selon les clés présentes) |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | — / `gemini-3.6-flash` | Fournisseur Gemini |
-| `GEMINI_FALLBACK_MODELS` / `VLM_BATCH_SIZE` | `gemini-3.5-flash-lite,gemini-flash-lite-latest` / `8` | Modèles de secours quand le quota du jour est épuisé ; créneaux décrits par requête |
-| `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL` | — / OpenAI / `gpt-4o-mini` | Tout serveur compatible OpenAI |
-| `TTS_PROVIDER` | `auto` | `edge` → `espeak` → `demo` |
-| `TTS_VOICE_FR` / `_AR` | Denise / Reem (ar-TN) | Voix |
-| `VAD_ENGINE` | `silero` | `silero` · `webrtc` |
-| `MIN_GAP_SECONDS` / `GAP_PADDING_SECONDS` | `1.5` / `0.25` | Silences exploitables |
-| `MAX_SLOT_SECONDS` | `10` | Longueur maximale d'un créneau (les longs silences sont découpés) ; `0` = pas de découpage |
-| `CONFIDENCE_THRESHOLD` | `0.6` | En dessous : « À relire » |
-| `DUCK_VOLUME` | `0.25` | Niveau de la bande originale pendant l'AD |
-| `GAP_SELECTION` | `auto` | `auto` (modèle ML s'il est entraîné, sinon tous les silences) · `model` · `all` |
-| `GAP_SCORE_THRESHOLD` / `GAP_MODEL_PATH` | `0` (seuil appris) / `ml/artifacts/gap_scorer.joblib` | Sélection ML des silences |
-| `MAX_UPLOAD_MB`, `SEED_SAMPLE`, `DATA_DIR`, `MODELS_DIR` | `500`, `true`, `./data`, `./models` | Stockage |
-| `SAMPLE_VIDEO` / `SAMPLE_TITLE` | `samples/les_ephemeres.mp4` / « Exemple — Les éphémères (extrait, CC BY-NC) » | Vidéo du projet d'exemple. Une vidéo locale peut aller dans `samples/local/` (ignoré par git). En DEMO MODE, une transcription et un script de référence sont utilisés s'ils sont fournis à côté de la vidéo (`<nom>.transcript.json`, `<nom>.script.json`) |
+| `GEMINI_API_KEY` | vide | Clé Gemini ; sans elle, Wasf tourne en DEMO MODE |
+| `WHISPER_MODEL` | `small` | Modèle de transcription (taille ou identifiant Hugging Face) |
+| `WHISPER_DEVICE` | `cpu` | `cuda` sur carte graphique NVIDIA |
+| `MIN_GAP_SECONDS` | `1.5` | Durée minimale d'un silence à décrire |
+| `GAP_SELECTION` | `auto` | `auto` (modèle ML s'il existe) · `model` · `all` |
+
+Toutes les autres variables sont décrites dans [`.env.example`](../.env.example).
 
 ## Développement
 

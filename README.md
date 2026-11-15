@@ -11,7 +11,7 @@ Wasf aide à audiodécrire les films tunisiens et francophones. L'IA propose une
 > Projet réalisé pour le hackathon OIF × JEI « IA Éthique 360 ». Wasf (*وصف*) veut dire « description » en arabe. Notre devise : *l'IA décrit, l'humain valide.*
 
 > [!NOTE]
-> Prototype de phase 1 : le parcours complet est testé en français ; l'arabe standard et la darija sont disponibles mais encore en test. Voir les [limites](#limites-et-suite).
+> Prototype de phase 1 : testé en français ; l'arabe standard et la darija sont disponibles mais encore en test.
 
 ## Le problème
 
@@ -68,16 +68,7 @@ Le modèle apprend un vrai signal (AP de 0,74 contre 0,61 au hasard), mais avec 
 
 ## Éthique 360
 
-| Angle | Ce que fait Wasf |
-|---|---|
-| Créateurs et métiers | L'humain valide chaque ligne sous son nom ; les relecteur·rice·s aveugles sont rémunéré·e·s. |
-| Droits | Consentement obligatoire à l'import ; aucun entraînement sur les films importés ; script remis à l'ayant droit. |
-| Données | Pas de reconnaissance faciale ; seules quelques images clés et le dialogue en texte quittent la machine. |
-| Cultures et langues | Français, arabe standard et darija, affichage de droite à gauche ; le choix de la langue revient aux usagers aveugles. |
-| Transparence | État visible sur chaque ligne ; mentions IA et validation dans tous les exports. |
-| Planète | Seuls les silences sont traités ; Whisper quantifié, sur CPU par défaut. |
-
-Détails, plan de validation et licences : [docs/ethics.md](docs/ethics.md).
+L'humain valide chaque ligne sous son nom, et rien n'est exporté sans lui. Wasf ne fait aucune reconnaissance faciale, ne s'entraîne jamais sur les films importés et n'envoie que quelques images clés hors de la machine. Détails : [docs/ethics.md](docs/ethics.md).
 
 ## Démarrage rapide
 
@@ -94,17 +85,3 @@ make backend              # puis ouvrez http://localhost:8000
 Sans clé d'API, Wasf démarre en DEMO MODE avec des descriptions préparées à l'avance, et le signale partout. Pour un premier essai : **Tableau de bord → « Essayer le clip d'exemple » → Lancer l'analyse → Éditeur → Valider → Export.**
 
 Windows, dépannage, configuration et tests : [docs/installation.md](docs/installation.md).
-
-## Limites et suite
-
-- Seul le français est testé de bout en bout. Whisper générique transcrit mal la darija, d'où un fine-tuning prévu sur des corpus tunisiens (LinTO, TunSwitch, TARIC, TEDxTN).
-- Les brouillons dépendent de Gemini, dont la version gratuite limite à environ 20 requêtes par jour. En phase 2, nous voulons le remplacer par notre propre modèle de description, capable de tourner en local.
-- Le modèle ML n'a vu que 17 vidéos, avec des descriptions en anglais ; il faudra le réentraîner sur plus de données et sur des films tunisiens annotés.
-- La voix edge-tts a besoin d'Internet ; hors ligne, Wasf passe à espeak-ng.
-- Nous ne donnons aucun chiffre sur le nombre de personnes aveugles en Tunisie, faute de source vérifiée.
-
-## Licences et équipe
-
-Code sous [Apache-2.0](LICENSE). La vidéo d'exemple est un extrait de « Les éphémères » (Nils Caneele, 2013) sous CC BY-NC ([samples/LICENSE.md](samples/LICENSE.md)). Les vidéos QuerYD servent à l'entraînement et ne sont jamais redistribuées. Licences des dépendances : [docs/ethics.md](docs/ethics.md#licences).
-
-Équipe hackathonjunior, hackathon OIF × JEI « IA Éthique 360 ». Merci à l'OIF et à la JEI, aux associations de personnes aveugles et malvoyantes, aux audiodescripteur·rice·s dont le travail a inspiré cet outil, et aux communautés open source de FFmpeg, faster-whisper, Silero, espeak-ng et edge-tts.
