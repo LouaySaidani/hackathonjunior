@@ -41,7 +41,7 @@ Wasf divise le travail d'audiodescription en étapes que l'IA accélère, sans j
 | Étape | Durée |
 |---|---|
 | Analyse automatique : silences, transcription, tri ML, 6 brouillons | 58 s |
-| Relecture humaine : 6 lignes, 5 validées, 1 rejetée | 3 min 12 s |
+| Relecture humaine : 6 lignes, 4 validées, 2 rejetées (la 2ᵉ lors d'une seconde relecture de quelques secondes, non comptée) | 3 min 12 s |
 | Voix de synthèse et mixage | 26 s |
 | **Total** | **4 min 36 s** |
 
