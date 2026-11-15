@@ -1,82 +1,96 @@
 # Architecture
 
-Wasf runs as a single process on the user's machine: a FastAPI backend that serves a React single-page app, runs AI/media jobs in an
-in-process thread pool, and stores everything in SQLite + local files under `./data`.
+Wasf tourne en **un seul processus** sur la machine de l'utilisateur·rice : un serveur FastAPI qui sert l'application
+React (page unique), exécute les tâches d'IA et de traitement vidéo dans un pool de threads interne, et stocke tout
+dans SQLite et dans des fichiers locaux sous `./data`.
 
 ```mermaid
 flowchart LR
   subgraph Browser["Navigateur (React + TS + Tailwind)"]
     UI1[Tableau de bord] --> UI2[Nouveau projet]
     UI2 --> UI3[Espace d'analyse]
-    UI3 --> UI4[Éditeur AD<br/>human-in-the-loop]
-    UI4 --> UI5[Export & QA]
+    UI3 --> UI4[Éditeur AD<br/>humain dans la boucle]
+    UI4 --> UI5[Export et contrôle qualité]
     UI5 --> UI6[Retours testeurs aveugles]
   end
 
   subgraph API["FastAPI /api"]
-    R[routes.py] --> J[jobs.py<br/>ThreadPool]
+    R[routes.py] --> J[jobs.py<br/>pool de threads]
     J --> S[service.py]
   end
 
   subgraph Pipeline["Pipeline (CPU par défaut)"]
     FF[FFmpeg<br/>audio 16 kHz · scènes · images clés]
     VAD[Silero VAD<br/>repli webrtcvad]
-    ASR[ASR provider<br/>faster-whisper · demo]
+    ASR[Fournisseur ASR<br/>faster-whisper · demo]
     GAP[compute_gaps<br/>≥ 1,5 s, marge 0,25 s]
-    VLM[VLM provider<br/>gemini · openai-compatible · demo]
+    SPLIT[split_long_gaps<br/>créneaux ≈ 10 s aux changements de plan]
+    ML[GapScorer<br/>score de pertinence ML]
+    VLM[Fournisseur VLM<br/>gemini · openai-compatible · demo]
     FIT[fit_to_gap<br/>mots/s → coupe ou signale]
-    TTS[TTS provider<br/>edge-tts · espeak-ng · demo]
-    MIX[FFmpeg mix<br/>ducking · MP4 2 pistes]
-    EXP[WebVTT · TTML · credits · script ayant droit]
+    TTS[Fournisseur TTS<br/>edge-tts · espeak-ng · demo]
+    MIX[Mixage FFmpeg<br/>atténuation · MP4 2 pistes]
+    EXP[WebVTT · TTML · crédits · script ayant droit]
   end
 
   Browser -- REST/JSON --> R
   S --> FF --> VAD --> GAP
   FF --> ASR --> GAP
-  GAP --> FF
-  GAP --> VLM --> FIT
+  GAP --> SPLIT --> ML --> VLM --> FIT
+  SPLIT --> FF
   S --> TTS --> MIX --> EXP
   S <--> DB[(SQLite<br/>data/app.db)]
   S <--> FS[(data/projects/&lt;id&gt;/<br/>source · audio · frames · voice · export)]
-  ASR -. lazy download .-> M[(/models volume)]
+  ASR -. téléchargé à la demande .-> M[(./models)]
 ```
 
-## Key design decisions
+## Choix de conception
 
-| Decision | Why |
+| Choix | Pourquoi |
 |---|---|
-| **VAD is authoritative for timing**, ASR segments only fill VAD misses | Whisper segment boundaries often span silences; trusting them erased all gaps on the sample. VAD timing + a 0.25 s safety margin guarantees descriptions never overlap speech. |
-| **Only gaps + 1–3 keyframes per gap** reach the VLM | A 90-min film has ~130 000 frames; we send a few hundred. Lower cost, lower energy, less data sent to third parties. |
-| **Providers behind tiny interfaces** (`providers/asr.py`, `vision.py`, `tts.py`) | Swap Whisper for a Tunisian fine-tune, Gemini for a local VLM via an OpenAI-compatible server, edge-tts for Piper, by env var only. |
-| **Validation is a separate, explicit API call with a name** (`POST /descriptions/{id}/validate`) | No code path sets `validated` automatically. Any edit after validation resets the line to `edited`. |
-| **Export only includes human-validated lines** | Nothing reaches the audience without human sign-off. |
-| **In-process job queue** | No Redis needed for an MVP; jobs interrupted by a restart are marked failed at boot. |
-| **Server-side interval check** | `PATCH`/`POST` descriptions refuse intervals overlapping detected speech (HTTP 422). |
-| **DEMO MODE flags propagate** | `demo` flag on each line, banner in UI, `NOTE` in VTT, `ttm:desc` in TTML, MP4 `comment` metadata, `credits.txt`. |
+| **Le VAD fait foi pour le minutage** ; les segments ASR ne comblent que ce que le VAD a manqué | Les segments de Whisper débordent souvent sur les silences : leur faire confiance effaçait tous les silences de la vidéo d'exemple. Le minutage du VAD et une marge de sécurité de 0,25 s garantissent qu'une description ne chevauche jamais la parole. |
+| **Les longs silences sont découpés en créneaux d'environ 10 s** (`split_long_gaps`, aux changements de plan) | Les audiodescripteur·rice·s humain·e·s décrivent un long passage muet en plusieurs fois, environ toutes les 10 à 25 s (constat tiré des données QuerYD, voir [ml/README.md](../ml/README.md)). |
+| **Un modèle ML donne un score à chaque créneau** (`pipeline/gapscore.py`) | Il apprend où les humains placent leurs descriptions. Le VLM ne rédige que dans les créneaux retenus ; les autres restent disponibles avec « Rédiger ici » (`POST /api/gaps/{id}/draft`). Sans modèle entraîné, tous les créneaux sont retenus. |
+| **Seuls les silences et 1 à 3 images clés par créneau** sont envoyés au VLM | Un film de 90 min compte environ 130 000 images ; nous en envoyons quelques centaines. Moins de coût, moins d'énergie, moins de données confiées à des tiers. |
+| **Fournisseurs derrière de petites interfaces** (`providers/asr.py`, `vision.py`, `tts.py`) | On remplace Whisper par un fine-tune tunisien, Gemini par un VLM local via un serveur compatible OpenAI, ou edge-tts par Piper, avec une simple variable d'environnement. |
+| **La validation est un appel d'API séparé, explicite et nominatif** (`POST /api/descriptions/{id}/validate`) | Aucun chemin de code ne passe une ligne à `validated` automatiquement. Toute modification après validation repasse la ligne à `edited`. |
+| **L'export ne contient que les lignes validées par un humain** | Rien n'atteint le public sans validation humaine. |
+| **File de tâches dans le processus** | Pas besoin de Redis pour un prototype ; une tâche interrompue par un redémarrage est marquée en erreur au démarrage suivant. |
+| **Contrôle des intervalles côté serveur** | `PATCH`/`POST` sur les descriptions refusent tout intervalle qui chevauche la parole détectée (HTTP 422). |
+| **Le marquage DEMO MODE se propage partout** | Indicateur `demo` sur chaque ligne, bannière dans l'interface, `NOTE` dans le VTT, `ttm:desc` dans le TTML, métadonnée `comment` du MP4, `credits.txt`. |
 
-## Data model (SQLite)
+## Modèle de données (SQLite)
 
-`Project` · `TranscriptSegment` · `SpeechRegion` · `Gap` · `Keyframe` · `Description` (status, origin, flags,
-confidence, provider/model, original AI text, validator + timestamp, JSON history, audio) · `Job` · `Feedback`.
+`Project` · `TranscriptSegment` · `SpeechRegion` · `Gap` (avec `score` et `recommended`) · `Keyframe` · `Description`
+(état, origine, indicateurs, confiance, fournisseur/modèle, texte IA d'origine, validateur·rice et date, historique
+JSON, audio) · `Job` · `Feedback`.
 
-Files live in `data/projects/<id>/`: `source.*`, `audio.wav`, `frames/*.jpg`, `voice/*.wav`, `export/*`.
-Paths are stored relative to `DATA_DIR`, so moving to object storage only requires changing `service.absolute/rel`.
+Les fichiers sont rangés dans `data/projects/<id>/` : `source.*`, `audio.wav`, `frames/*.jpg`, `voice/*.wav`,
+`export/*`. Les chemins sont enregistrés relativement à `DATA_DIR` : passer à un stockage objet ne demande que de
+modifier `service.absolute/rel`.
 
-## Description lifecycle
+## Cycle de vie d'une ligne de description
 
 ```mermaid
 stateDiagram-v2
-  [*] --> ai_draft: VLM draft
-  [*] --> edited: manual line
-  ai_draft --> edited: human edits text/time/lang
-  ai_draft --> ai_draft: regenerate
-  edited --> ai_draft: regenerate
-  ai_draft --> validated: human validates (name required)
-  edited --> validated: human validates (name required)
-  validated --> edited: any further edit
+  [*] --> ai_draft: brouillon du VLM
+  [*] --> edited: ligne ajoutée à la main
+  ai_draft --> edited: l'humain modifie texte, minutage ou langue
+  ai_draft --> ai_draft: régénérer
+  edited --> ai_draft: régénérer
+  ai_draft --> validated: l'humain valide (nom obligatoire)
+  edited --> validated: l'humain valide (nom obligatoire)
+  validated --> edited: toute modification ultérieure
   ai_draft --> rejected
   edited --> rejected
   validated --> rejected
-  rejected --> edited: reopen
-  rejected --> ai_draft: reopen (unchanged AI text)
+  rejected --> edited: rouvrir
+  rejected --> ai_draft: rouvrir (texte IA inchangé)
 ```
+
+| État (API) | Libellé dans l'interface |
+|---|---|
+| `ai_draft` | BROUILLON IA |
+| `edited` | MODIFIÉ PAR UN HUMAIN |
+| `validated` | VALIDÉ PAR UN HUMAIN (nom et date) |
+| `rejected` | REJETÉ |
